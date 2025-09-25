@@ -1,19 +1,28 @@
 {% extends 'layout/basic.html' %}
 {% block title %}Профиль пользователя{% endblock %}
 {% block content %}
-<h2>Профиль пользователя {{ user.username }}</h2>
+<h2>Настройки профиля</h2>
 
-{% if user.first_name and user.last_name %}
-<h1>Здравствуйте, {{ user.first_name }} {{ user.last_name }}!</h1>
-{% else %}
-<p>Здравствуйте!</>
-{% endif %}
+<div class="card p-3 m-3">
+    <p><strong>Логин:</strong> {{ user.username }}</p>
+    <p><strong>Почта:</strong> {{ user.email }}</p>
+    <p><strong>Имя:</strong> {{ user.first_name }}</p>
+    <p><strong>Фамилия:</strong> {{ user.last_name }}</p>
+</div>
 
+<div class="d-grid gap-2 m-2 p-1">
+    <form action="{% url 'main:profile_edit' %}">
+        <button type="submit" class="btn btn-primary">Изменить профиль</button>
+    </form>
 
-{% if user.posts > 0 %}
-<h3>Ваши объявления</h3>
-{% else %}
-<h3>У вас пока нет объявлений</h3>
-{% endif %}
+    <form action="{% url 'main:password_edit' %}">
+        <button type="submit" class="btn btn-primary">Сменить пароль</button>
+    </form>
+
+    <form method="post" action="{% url 'main:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Выход</button>
+    </form>
+</div>
 
 {% endblock %} 

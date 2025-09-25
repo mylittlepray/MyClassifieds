@@ -1,76 +1,89 @@
 {% load django_bootstrap5 %}
 {% load static %}
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Главная{% endblock %} - Доска объявлений</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Электронная доска объявлений{% endblock %}</title>
+
     {% bootstrap_css %}
     {% bootstrap_javascript %}
-    <link rel="stylesheet" type="text/css" href="{% static 'main/style.css' %}">
-    <style>
-        /* фикс, чтобы меню не обрезалось */
-        .navbar, .navbar .container-fluid, .navbar .collapse {
-            overflow: visible !important;
-        }
-    </style>
 </head>
+<body>
 
-<body class="pt-5">
-
-<nav class="navbar navbar-expand-lg bg-black navbar-dark fixed-top">
-    <div class="container-fluid">
-        <a class="navbar-brand p-2" href="{% url 'main:index' %}">Доска объявлений</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Меню">
+<nav class="navbar navbar-expand-lg navbar-dark bg-black">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'main:index' %}">Объявления</a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Меню">
             <span class="navbar-toggler-icon"></span>
         </button>
-
-        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-            <div class="navbar-nav">
+        
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarRealty" role="button" data-bs-toggle="dropdown" aria-expanded="false">Недвижимость</a>
+                    
+                    <ul class="dropdown-menu" aria-labelledby="navbarRealty">
+                        
+                        <li><a class="dropdown-item" href="#">Жильё</a></li>
+                        <li><a class="dropdown-item" href="#">Склады</a></li>
+                        <li><a class="dropdown-item" href="#">Гаражи</a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarTransport" role="button" data-bs-toggle="dropdown" aria-expanded="false">Транспорт</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarTransport">
+                        <li><a class="dropdown-item" href="#">Легковой</a></li>
+                        <li><a class="dropdown-item" href="#">Грузовой</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'main:other' page='about' %}">О сайте</a></li>
+            </ul>
+            
+            <ul class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
-                <div class="nav-item"><a class="nav-link" href="{% url 'main:profile' %}">Профиль</a></div>
-                <div class="nav-item"><a class="nav-link" href="{% url 'main:ads' %}">Объявления</a></div>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
+                        <li><a class="dropdown-item" href="{% url 'main:profile' %}">Мой профиль</a></li>
+                        <li><a class="dropdown-item" href="{% url 'main:myads' %}">Мои объявления</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="{% url 'main:logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item text-danger">Выйти</button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
                 {% else %}
-                <div class="nav-item"><a class="nav-link" href="#">Регистрация</a></div>
-                <div class="nav-item"><a class="nav-link" href="{% url 'main:login' %}">Вход</a></div>
+                <li class="nav-item"><a class="nav-link" href="{% url 'main:login' %}">Вход</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'main:register' %}">Регистрация</a></li>
                 {% endif %}
-            </div>
+            </ul>
         </div>
     </div>
 </nav>
 
-<div class="container mt-5">
-    <header class="row mb-4">
-        <h1 class="col-12 text-center">Объявления</h1>
-    </header>
-
-    <div class="row">
-        <nav class="col-md-3 mb-3">
-            <div class="list-group">
-                <span class="list-group-item list-group-item-dark">Недвижимость</span>
-                <a class="list-group-item list-group-item-action" href="#">Жильё</a>
-                <a class="list-group-item list-group-item-action" href="#">Склады</a>
-                <a class="list-group-item list-group-item-action" href="#">Гаражи</a>
-                <span class="list-group-item list-group-item-dark">Транспорт</span>
-                <a class="list-group-item list-group-item-action" href="#">Легковой</a>
-                <a class="list-group-item list-group-item-action" href="#">Грузовой</a>
-                <a class="list-group-item list-group-item-action" href="{% url 'main:other' page='about' %}">О сайте</a>
-            </div>
-        </nav>
-
-        <main class="col-md-9">
-            {% bootstrap_messages %}
-            {% block content %}{% endblock %}
-        </main>
-    </div>
-</div>
-
-<footer class="bg-black text-light py-3 mt-auto">
+<header class="bg-black text-white py-5 mb-4" style="background: url({% static 'main/bg.jpg' %}) center/cover no-repeat;">
     <div class="container text-center">
-        <p class="mb-0">&copy; 2025 Доска объявлений</p>
+        <h1 class="display-4 fw-bold">Электронная доска объявлений</h1>
+        <p class="lead">Ищи, находи и публикуй — всё в одном месте</p>
+    </div>
+</header>
+
+<main class="container">
+    {% bootstrap_messages %}
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-black text-white text-center py-3 mt-4">
+    <div class="container">
+        <small>© 2025 Электронная доска объявлений</small>
     </div>
 </footer>
 

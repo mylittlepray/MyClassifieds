@@ -1,0 +1,11 @@
+{% extends 'layout/basic.html' %}
+{% block title %}Мои объявления{% endblock %}
+{% block content %}
+
+{% if user.posts > 0 %}
+<h3>Мои объявления</h3>
+{% else %}
+<h3>У вас пока нет объявлений</h3>
+{% endif %}
+
+{% endblock %} 
