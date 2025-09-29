@@ -106,6 +106,7 @@ LANGUAGE_CODE = 'ru-RU'
 
 AUTH_USER_MODEL = 'main.AdvUser'
 LOGOUT_REDIRECT_URL = 'main:index' 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 INSTALLED_APPS = [
     'main',

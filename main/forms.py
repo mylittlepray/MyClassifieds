@@ -8,13 +8,15 @@ from .signals import post_register
 
 class RegisterForm(forms.ModelForm):
     email = forms.EmailField(required=True, label='Адрес электронной почты')
-
+    
     password1 = forms.CharField(label='Пароль', 
                                 widget=forms.PasswordInput,
                                 help_text=password_validation.password_validators_help_text_html()) 
+    
     password2 = forms.CharField(label='Пароль (повторно)',
                                 widget=forms.PasswordInput,
                                 help_text='Введите тот же самый пароль еще раз для проверки')
+    
     def clean_password1(self):
         password1 = self.cleaned_data['password1']
         if password1:

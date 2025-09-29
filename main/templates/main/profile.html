@@ -10,19 +10,32 @@
     <p><strong>Фамилия:</strong> {{ user.last_name }}</p>
 </div>
 
-<div class="d-grid gap-2 m-2 p-1">
-    <form action="{% url 'main:profile_edit' %}">
-        <button type="submit" class="btn btn-primary">Изменить профиль</button>
-    </form>
-
-    <form action="{% url 'main:password_edit' %}">
-        <button type="submit" class="btn btn-primary">Сменить пароль</button>
-    </form>
-
-    <form method="post" action="{% url 'main:logout' %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Выход</button>
-    </form>
+<div class="card m-3">
+    <div class="card-body text-center">
+        <div class="d-flex justify-content-center gap-2">
+            <form action="{% url 'main:profile_edit' %}">
+                <button type="submit" class="btn btn-primary">Изменить профиль</button>
+            </form>
+            <form action="{% url 'main:password_edit' %}">
+                <button type="submit" class="btn btn-primary">Сменить пароль</button>
+            </form>
+        </div>
+    </div>
 </div>
+
+<div class="card m-3">
+    <div class="card-body text-center">
+        <div class="d-flex justify-content-center gap-2">
+            <form method="post" action="{% url 'main:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Выйти</button>
+            </form>
+            <form method="get" action="{% url 'main:profile_delete' %}">
+                <button type="submit" class="btn btn-danger">Удалить аккаунт</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 {% endblock %} 

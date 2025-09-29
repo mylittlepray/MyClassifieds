@@ -7,4 +7,4 @@ class AdvUser(AbstractUser):
    send_messages = models.BooleanField(default=True, verbose_name='Слать оповещения о новых комментариях?')
    
 class Meta(AbstractUser.Meta):
-    pass 
+   pass
