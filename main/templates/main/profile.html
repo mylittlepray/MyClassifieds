@@ -12,6 +12,12 @@
 
 <div class="card m-3">
     <div class="card-body text-center">
+        <p><a href="{% url 'main:profile_bb_add' %}">Добавить объявление</a></p>
+    </div>
+</div>
+
+<div class="card m-3">
+    <div class="card-body text-center">
         <div class="d-flex justify-content-center gap-2">
             <form action="{% url 'main:profile_edit' %}">
                 <button type="submit" class="btn btn-primary">Изменить профиль</button>

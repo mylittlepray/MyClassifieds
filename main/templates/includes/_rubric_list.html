@@ -1,0 +1,13 @@
+<div class="list-group list-group-flush">
+	{% for rubric in rubrics %}
+		{% ifchanged rubric.super_rubric.pk %}
+			<div class="mt-3 mb-1 small text-uppercase text-muted fw-semibold">
+				{{ rubric.super_rubric.name }}
+			</div>
+		{% endifchanged %}
+		<a class="list-group-item list-group-item-action" href="{% url 'main:rubric_bbs' pk=rubric.pk %}"> {{ rubric.name }} </a>
+	{% endfor %}
+	<div class="mt-3">
+		<a class="link-light text-decoration-none" href="{% url 'main:other' page='about' %}">О сайте</a>
+	</div>
+</div>

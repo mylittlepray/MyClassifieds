@@ -4,90 +4,108 @@
 <!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Электронная доска объявлений{% endblock %}</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'main/apple-touch-icon.png' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'main/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'main/favicon-16x16.png' %}">
-    <link rel="manifest" href="{% static 'main/site.webmanifest' %}">
-    {% bootstrap_css %}
-    {% bootstrap_javascript %}
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{% block title %}Электронная доска объявлений{% endblock %}</title>
+	<link rel="apple-touch-icon" sizes="180x180" href="{% static 'main/apple-touch-icon.png' %}">
+	<link rel="icon" type="image/png" sizes="32x32" href="{% static 'main/favicon-32x32.png' %}">
+	<link rel="icon" type="image/png" sizes="16x16" href="{% static 'main/favicon-16x16.png' %}">
+	<link rel="manifest" href="{% static 'main/site.webmanifest' %}">
+	{% bootstrap_css %}
+	{% bootstrap_javascript %}
 </head>
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-black">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="{% url 'main:index' %}">Объявления</a>
-        
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Меню">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <div class="collapse navbar-collapse" id="navbarMain">
-            <ul class="navbar-nav mx-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarRealty" role="button" data-bs-toggle="dropdown" aria-expanded="false">Недвижимость</a>
-                    
-                    <ul class="dropdown-menu" aria-labelledby="navbarRealty">
-                        
-                        <li><a class="dropdown-item" href="#">Жильё</a></li>
-                        <li><a class="dropdown-item" href="#">Склады</a></li>
-                        <li><a class="dropdown-item" href="#">Гаражи</a></li>
-                    </ul>
-                </li>
-                
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarTransport" role="button" data-bs-toggle="dropdown" aria-expanded="false">Транспорт</a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarTransport">
-                        <li><a class="dropdown-item" href="#">Легковой</a></li>
-                        <li><a class="dropdown-item" href="#">Грузовой</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'main:other' page='about' %}">О сайте</a></li>
-            </ul>
-            
-            <ul class="navbar-nav ms-auto">
-                {% if user.is_authenticated %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
-                        <li><a class="dropdown-item" href="{% url 'main:profile' %}">Мой профиль</a></li>
-                        <li><a class="dropdown-item" href="{% url 'main:myads' %}">Мои объявления</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form method="post" action="{% url 'main:logout' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="dropdown-item text-danger">Выйти</button>
-                            </form>
-                        </li>
-                    </ul>
-                </li>
-                {% else %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'main:login' %}">Вход</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'main:register' %}">Регистрация</a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
+	<div class="container">
+		<a class="navbar-brand fw-bold" href="{% url 'main:index' %}">Объявления</a>
+
+		<button class="btn btn-outline-light d-lg-none me-2"
+				type="button"
+				data-bs-toggle="offcanvas"
+				data-bs-target="#rubricOffcanvas"
+				aria-controls="rubricOffcanvas">
+			Категории
+		</button>
+
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+				aria-controls="navbarMain" aria-expanded="false" aria-label="Меню">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarMain">
+			<ul class="navbar-nav me-auto">
+				<li class="nav-item"><a class="nav-link" href="{% url 'main:other' page='about' %}">О сайте</a></li>
+			</ul>
+
+			<ul class="navbar-nav ms-auto">
+				{% if user.is_authenticated %}
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button"
+						   data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
+						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
+							<li><a class="dropdown-item" href="{% url 'main:profile' %}">Мой профиль</a></li>
+							<li><a class="dropdown-item" href="{% url 'main:myads' %}">Мои объявления</a></li>
+							<li><hr class="dropdown-divider"></li>
+							<li>
+								<form method="post" action="{% url 'main:logout' %}" class="d-inline">
+									{% csrf_token %}
+									<button type="submit" class="dropdown-item text-danger">Выйти</button>
+								</form>
+							</li>
+						</ul>
+					</li>
+				{% else %}
+					<li class="nav-item"><a class="nav-link" href="{% url 'main:login' %}">Вход</a></li>
+					<li class="nav-item"><a class="nav-link" href="{% url 'main:register' %}">Регистрация</a></li>
+				{% endif %}
+			</ul>
+		</div>
+	</div>
 </nav>
 
 <header class="bg-black text-white py-5 mb-4" style="background: url({% static 'main/bg.jpg' %}) center/cover no-repeat;">
-    <div class="container text-center">
-        <h1 class="display-4 fw-bold">Электронная доска объявлений</h1>
-        <p class="lead">Ищи, находи и публикуй — всё в одном месте</p>
-    </div>
+	<div class="container text-center">
+		<h1 class="display-4 fw-bold">Электронная доска объявлений</h1>
+		<p class="lead">Ищи, находи и публикуй — всё в одном месте</p>
+	</div>
 </header>
 
+<div class="offcanvas offcanvas-start" tabindex="-1" id="rubricOffcanvas" aria-labelledby="rubricOffcanvasLabel">
+	<div class="offcanvas-header bg-black text-white">
+		<h5 class="offcanvas-title" id="rubricOffcanvasLabel">Категории</h5>
+		<button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+	</div>
+	<div class="offcanvas-body">
+		{% include "includes/_rubric_list.html" %}
+	</div>
+</div>
+
 <main class="container">
-    {% bootstrap_messages %}
-    {% block content %}{% endblock %}
+	{% bootstrap_messages %}
+
+	<div class="row">
+		<aside class="col-lg-3 d-none d-lg-block">
+			<div class="position-sticky" style="top: 1rem;">
+				<div class="card border-0 shadow-sm">
+					<div class="card-header bg-black text-white fw-semibold">Категории</div>
+					<div class="card-body p-0">
+						{% include "includes/_rubric_list.html" %}
+					</div>
+				</div>
+			</div>
+		</aside>
+
+		<section class="col-lg-9">
+			{% block content %}{% endblock %}
+		</section>
+	</div>
 </main>
 
 <footer class="bg-black text-white text-center py-3 mt-4">
-    <div class="container">
-        <small>© 2025 Электронная доска объявлений</small>
-    </div>
+	<div class="container">
+		<small>© 2025 Электронная доска объявлений</small>
+	</div>
 </footer>
 
 </body>
