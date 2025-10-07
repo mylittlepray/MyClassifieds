@@ -12,12 +12,6 @@
 
 <div class="card m-3">
     <div class="card-body text-center">
-        <p><a href="{% url 'main:profile_bb_add' %}">Добавить объявление</a></p>
-    </div>
-</div>
-
-<div class="card m-3">
-    <div class="card-body text-center">
         <div class="d-flex justify-content-center gap-2">
             <form action="{% url 'main:profile_edit' %}">
                 <button type="submit" class="btn btn-primary">Изменить профиль</button>
@@ -37,7 +31,7 @@
                 <button type="submit" class="btn btn-danger">Выйти</button>
             </form>
             <form method="get" action="{% url 'main:profile_delete' %}">
-                <button type="submit" class="btn btn-danger">Удалить аккаунт</button>
+                <button type="submit" class="btn btn-outline-danger">Удалить аккаунт</button>
             </form>
         </div>
     </div>
