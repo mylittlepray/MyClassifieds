@@ -11,6 +11,7 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="{% static 'main/favicon-32x32.png' %}">
 	<link rel="icon" type="image/png" sizes="16x16" href="{% static 'main/favicon-16x16.png' %}">
 	<link rel="manifest" href="{% static 'main/site.webmanifest' %}">
+	<link rel="manifest" href="{% static 'main/style.css' %}">
 	{% bootstrap_css %}
 	{% bootstrap_javascript %}
 </head>
@@ -48,7 +49,7 @@
 						   data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
 						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
 							<li><a class="dropdown-item" href="{% url 'main:profile' %}">Мой профиль</a></li>
-							<li><a class="dropdown-item" href="{% url 'main:myads' %}">Мои объявления</a></li>
+							<li><a class="dropdown-item" href="{% url 'main:profile_my_bbs' %}">Мои объявления</a></li>
 							<li><hr class="dropdown-divider"></li>
 							<li>
 								<form method="post" action="{% url 'main:logout' %}" class="d-inline">

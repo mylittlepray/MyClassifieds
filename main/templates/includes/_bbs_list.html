@@ -1,0 +1,32 @@
+{# templates/includes/_bbs_list.html #}
+{% load thumbnail %}
+{% load static %}
+
+<div class="vstack gap-3 my-4">
+    {% for bb in bbs %}
+    {% url 'main:bb_detail' rubric_pk=bb.rubric.pk pk=bb.pk as url %}
+    <div class="card shadow border-0 rounded-4 overflow-hidden">
+        <div class="row g-0 p-3">
+            <a class="col-md-2" href="{{ url }}">
+                {% if bb.image %}
+                <img class="img-fluid rounded-3" src="{% thumbnail bb.image 'default' %}">
+                {% else %}
+                <img class="img-fluid rounded-3" src="{% static 'main/empty.jpg' %}">
+                {% endif %}
+            </a>
+            <div class="col-md-10 card-body">
+                <h5 class="card-title mb-1">
+                    <a href="{{ url }}" class="text-decoration-none text-dark">{{ bb.title }}</a>
+                </h5>
+                <p class="card-text text-muted small mb-2">{{ bb.content|truncatechars:150 }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-success">{{ bb.price }} ₽</span>
+                    <span class="text-secondary small">{{ bb.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted text-center mt-4">Пока нет объявлений.</p>
+    {% endfor %}
+</div>

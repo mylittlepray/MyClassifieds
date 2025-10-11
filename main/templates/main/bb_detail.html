@@ -2,8 +2,13 @@
 {% block title %}{{ bb.title }} - {{ bb.rubric.name }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="text m-2">
+    <a href="{% url 'main:rubric_bbs' pk=bb.rubric.pk %}{{ all }}" class="btn btn-outline-dark">
+        ← Назад к объявлениям
+    </a>
+</div>
 
+<div class="container mt-4">
     <!-- Галерея изображений -->
     {% if bb.image or ais %}
     <div id="bbCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
@@ -27,14 +32,19 @@
         </div>
 
         <!-- Навигация -->
-        <button class="carousel-control-prev" type="button" data-bs-target="#bbCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Предыдущее</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#bbCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Следующее</span>
-        </button>
+    <button class="carousel-control-prev" type="button" data-bs-target="#bbCarousel" data-bs-slide="prev">
+      <span class="bg-dark rounded-circle d-flex align-items-center justify-content-center p-2" aria-hidden="true" style="width:40px; height:40px;">
+        <span class="carousel-control-prev-icon"></span>
+      </span>
+      <span class="visually-hidden">Предыдущее</span>
+    </button>
+
+    <button class="carousel-control-next" type="button" data-bs-target="#bbCarousel" data-bs-slide="next">
+      <span class="bg-dark rounded-circle d-flex align-items-center justify-content-center p-2" aria-hidden="true" style="width:40px; height:40px;">
+        <span class="carousel-control-next-icon"></span>
+      </span>
+      <span class="visually-hidden">Следующее</span>
+    </button>
     </div>
     {% endif %}
 
@@ -51,13 +61,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Кнопка назад -->
-    <div class="text-center">
-        <a href="{% url 'main:rubric_bbs' pk=bb.rubric.pk %}{{ all }}" class="btn btn-outline-secondary">
-            ← Назад к объявлениям
-        </a>
     </div>
 </div>
 

@@ -66,10 +66,40 @@ class SubRubricForm(forms.ModelForm):
 class SearchForm(forms.Form): 
     keyword = forms.CharField(required=False, max_length=20, label='') 
 
-class BbForm(forms.ModelForm): 
-    class Meta: 
-        model = Bb 
-        fields = '__all__' 
-        widgets = {'author': forms.HiddenInput} 
+class BbForm(forms.ModelForm):
+    class Meta:
+        model = Bb
+        fields = ('rubric', 'title', 'content', 'price', 'contacts', 'image', 'is_active')
+        widgets = {
+            'rubric': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 50}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'maxlength': 600}),
+            'price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'max': '999999999999.99',
+                'step': '0.01',
+                'placeholder': 'до 1 000 000 000 000 (1 трлн)'
+            }),
+            'contacts': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 50}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
 
-AIFormSet = forms.inlineformset_factory(Bb, AdditionalImage, fields='__all__') 
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price is None:
+            return price
+        if price < 0:
+            raise forms.ValidationError('Цена не может быть отрицательной.')
+        if price > 999999999999.99:
+            raise forms.ValidationError('Максимальная цена — 999 999 999 999.99')
+        return price
+
+class AIForm(forms.ModelForm):
+    class Meta:
+        model = AdditionalImage
+        fields = ('image',)
+        widgets = {'image': forms.ClearableFileInput(attrs={'class': 'form-control'})}
+
+AIFormSet = forms.inlineformset_factory(Bb, AdditionalImage, form=AIForm, extra=3)

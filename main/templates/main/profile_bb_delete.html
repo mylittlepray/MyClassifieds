@@ -1,0 +1,15 @@
+{% extends 'layout/basic.html' %}
+
+{% load django_bootstrap5 %}
+
+{% block title %}Удаление объявления{% endblock %}
+
+{% block content %}
+<h2>Удаление объявления</h2>
+<p>Вы уверены, что хотите удалить объявление "{{ bb.title }}"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Удалить</button>
+    <a href="{% url 'main:profile_my_bbs' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

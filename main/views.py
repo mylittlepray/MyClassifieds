@@ -19,6 +19,8 @@ from django.core.signing import BadSignature
 from django.core.paginator import Paginator
 
 from django.db.models import Q
+from functools import reduce
+from operator import and_
 
 from .utilities import signer
 from .models import SubRubric
@@ -89,12 +91,19 @@ def index(request):
     bbs = Bb.objects.filter(is_active=True)  # Все активные объявления
 
     # Поиск по ключевому слову
-    if 'keyword' in request.GET:
-        keyword = request.GET['keyword']
-        q = Q(title__icontains=keyword) | Q(content__icontains=keyword)
-        bbs = bbs.filter(q)
-    else:
-        keyword = ''
+    keyword = request.GET.get('keyword', '')
+    if keyword:
+        # Split by space and filter out empty strings
+        keywords = [word for word in keyword.split() if word]
+        if keywords:
+            # Create a Q object for each keyword
+            q_objects = []
+            for kw in keywords:
+                q_objects.append(Q(title__icontains=kw) | Q(content__icontains=kw))
+            
+            # Combine the Q objects with AND
+            if q_objects:
+                bbs = bbs.filter(reduce(and_, q_objects))
 
     form = SearchForm(initial={'keyword': keyword})
     paginator = Paginator(bbs, 5)  # например, 5 объявлений на страницу
@@ -177,34 +186,35 @@ def rubric_bbs(request, pk):
 
 @login_required
 def profile(request):
-    bbs = Bb.objects.filter(author=request.user.pk) 
-    context = {'bbs': bbs} 
-
-    return render(request, 'main/profile.html', context) 
+    return render(request, 'main/profile.html') 
 
 @login_required
-def myads(request):
-    return render(request, 'main/myads.html') 
+def profile_my_bbs(request):
+    bbs = Bb.objects.filter(author=request.user.pk) 
+    context = {'bbs': bbs} 
+    return render(request, 'main/profile_my_bbs.html', context) 
 
-@login_required 
-def profile_bb_add(request): 
-    if request.method == 'POST': 
-        form = BbForm(request.POST, request.FILES) 
-        if form.is_valid(): 
-            bb = form.save() 
-            formset = AIFormSet(request.POST, request.FILES, instance=bb) 
-            
-            if formset.is_valid(): 
-                formset.save() 
-                messages.add_message(request, messages.SUCCESS, 'Объявление добавлено') 
+@login_required
+def profile_bb_add(request):
+    if request.method == 'POST':
+        form = BbForm(request.POST, request.FILES)
+        formset = AIFormSet(request.POST, request.FILES)
 
-                return redirect('main:profile') 
-    else: 
-        form = BbForm(initial={'author': request.user.pk}) 
-        formset = AIFormSet() 
-    
-    context = {'form': form, 'formset': formset} 
-    return render(request, 'main/profile_bb_add.html', context)
+        if form.is_valid() and formset.is_valid():
+            bb = form.save(commit=False)
+            bb.author = request.user
+            bb.save()
+            formset.instance = bb
+            formset.save()
+            messages.success(request, 'Объявление успешно добавлено!')
+            return redirect('main:profile')
+        else:
+            messages.error(request, 'Исправьте ошибки в форме.')
+    else:
+        form = BbForm(initial={'author': request.user.pk})
+        formset = AIFormSet()
+
+    return render(request, 'main/profile_bb_add.html', {'form': form, 'formset': formset})
 
 @login_required 
 def profile_bb_edit(request, pk): 
@@ -213,7 +223,9 @@ def profile_bb_edit(request, pk):
     if request.method == 'POST': 
         form = BbForm(request.POST, request.FILES, instance=bb) 
         if form.is_valid(): 
-            bb = form.save() 
+            bb = form.save(commit=False) 
+            bb.author = request.user 
+            bb.save() 
             formset = AIFormSet(request.POST, request.FILES, instance=bb) 
             if formset.is_valid(): 
                 formset.save() 

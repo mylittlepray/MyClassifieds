@@ -1,0 +1,96 @@
+{% load django_bootstrap5 %}
+{% load django_bootstrap5 static %}
+
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+
+  <div class="card shadow-sm p-4 mb-4">
+    <!-- Рубрика -->
+    <div class="mb-3">
+      {{ form.rubric.label_tag }}
+      {{ form.rubric }}
+      <div class="form-text">Выберите подходящую рубрику.</div>
+      {% if form.rubric.errors %}
+        <div class="invalid-feedback d-block text-danger">{{ form.rubric.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Название -->
+    <div class="mb-3">
+      {{ form.title.label_tag }}
+      {{ form.title }}
+      <div class="form-text"><span id="titleCounter">0</span>/50 символов</div>
+      {% if form.title.errors %}
+        <div class="invalid-feedback d-block text-danger">{{ form.title.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Описание -->
+    <div class="mb-3">
+      {{ form.content.label_tag }}
+      {{ form.content }}
+      <div class="form-text"><span id="contentCounter">0</span>/600 символов</div>
+      {% if form.content.errors %}
+        <div class="invalid-feedback d-block text-danger">{{ form.content.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Цена -->
+    <div class="mb-3">
+      {{ form.price.label_tag }}
+      {{ form.price }}
+      <div class="form-text text-muted" id="priceHelp">Цена: от 0 до 999 999 999 999.99 ₽</div>
+      {% if form.price.errors %}
+        <div class="invalid-feedback d-block text-danger fw-bold">{{ form.price.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Контакты -->
+    <div class="mb-3">
+      {{ form.contacts.label_tag }}
+      {{ form.contacts }}
+      <div class="form-text">
+        <span id="contactsCounter">0</span>/50 символов — например: +7 999 123-45-67 или Telegram @имя.
+      </div>
+      {% if form.contacts.errors %}
+        <div class="invalid-feedback d-block text-danger">{{ form.contacts.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Главное изображение -->
+    <div class="mb-3">
+      {{ form.image.label_tag }}
+      {{ form.image }}
+      {% if form.instance.image %}
+        <div class="mt-2">
+          <strong>Текущее изображение:</strong><br>
+          <img src="{{ form.instance.image.url }}" class="img-thumbnail mt-2" style="max-width:150px;">
+        </div>
+      {% endif %}
+      <div id="mainImagePreview" class="mt-2"></div>
+      <div class="form-text">Главное изображение товара</div>
+      {% if form.image.errors %}
+        <div class="invalid-feedback d-block text-danger">{{ form.image.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Активность -->
+    <div class="form-check mb-3">
+      {{ form.is_active }}
+      {{ form.is_active.label_tag }}
+    </div>
+  </div>
+
+  <!-- Дополнительные изображения -->
+  <h5 class="mb-3">Дополнительные изображения</h5>
+  <div class="card shadow-sm p-4 mb-4">
+    {% bootstrap_formset formset layout='vertical' %}
+    <div id="extraPreviews" class="d-flex flex-wrap gap-3 mt-3"></div>
+  </div>
+
+  <div class="text-end">
+    {% block submit_button %}{% endblock %}
+  </div>
+</form>
+
+<script src="{% static 'js/bb_form.js' %}"></script>
