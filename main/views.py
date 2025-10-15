@@ -230,7 +230,7 @@ def profile_bb_edit(request, pk):
             if formset.is_valid(): 
                 formset.save() 
                 messages.add_message(request, messages.SUCCESS, 'Объявление исправлено') 
-                return redirect('main:profile')
+                return redirect('main:profile_my_bbs')
     else: 
         form = BbForm(instance=bb) 
         formset = AIFormSet(instance=bb) 
@@ -245,7 +245,7 @@ def profile_bb_delete(request, pk):
     if request.method == 'POST': 
         bb.delete() 
         messages.add_message(request, messages.SUCCESS, 'Объявление удалено') 
-        return redirect('main:profile') 
-    else: 
+        return redirect('main:profile_my_bbs') 
+    else:
         context = {'bb': bb} 
         return render(request, 'main/profile_bb_delete.html', context)

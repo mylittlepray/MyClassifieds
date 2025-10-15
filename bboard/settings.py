@@ -112,6 +112,7 @@ LOGOUT_REDIRECT_URL = 'main:index'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 INSTALLED_APPS = [
+    'django.contrib.humanize',
     'main',
     'django_bootstrap5',
     'django_cleanup',

@@ -1,5 +1,8 @@
 {% extends 'layout/basic.html' %}
+{% load humanize %}
+
 {% block title %}{{ bb.title }} - {{ bb.rubric.name }}{% endblock %}
+
 
 {% block content %}
 <div class="text m-2">
@@ -55,7 +58,7 @@
                 <div class="card-body">
                     <h2 class="card-title">{{ bb.title }}</h2>
                     <p class="card-text">{{ bb.content }}</p>
-                    <p class="fw-bold fs-5">{{ bb.price }} руб.</p>
+                    <p class="fw-bold fs-5">{{ bb.price|intcomma }} ₽</p>
                     <p>{{ bb.contacts }}</p>
                     <p class="text-end text-muted fst-italic mb-0">Добавлено {{ bb.created_at }}</p>
                 </div>

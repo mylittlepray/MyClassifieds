@@ -1,11 +1,12 @@
 {# templates/includes/_bbs_list.html #}
 {% load thumbnail %}
 {% load static %}
+{% load humanize %}
 
 <div class="vstack gap-3 my-4">
     {% for bb in bbs %}
     {% url 'main:bb_detail' rubric_pk=bb.rubric.pk pk=bb.pk as url %}
-    <div class="card shadow border-0 rounded-4 overflow-hidden">
+    <div class="card bbcard shadow border-0 rounded-4 overflow-hidden">
         <div class="row g-0 p-3">
             <a class="col-md-2" href="{{ url }}">
                 {% if bb.image %}
@@ -20,7 +21,7 @@
                 </h5>
                 <p class="card-text text-muted small mb-2">{{ bb.content|truncatechars:150 }}</p>
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-semibold text-success">{{ bb.price }} ₽</span>
+                    <span class="fw-semibold text-success">{{ bb.price|intcomma }} ₽</span>
                     <span class="text-secondary small">{{ bb.created_at|date:"d.m.Y H:i" }}</span>
                 </div>
             </div>
