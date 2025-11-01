@@ -8,6 +8,9 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from .signals import post_register 
 
+from captcha.fields import CaptchaField
+from .models import Comment
+
 class RegisterForm(forms.ModelForm):
     email = forms.EmailField(required=True, label='Адрес электронной почты')
     
@@ -103,3 +106,25 @@ class AIForm(forms.ModelForm):
         widgets = {'image': forms.ClearableFileInput(attrs={'class': 'form-control'})}
 
 AIFormSet = forms.inlineformset_factory(Bb, AdditionalImage, form=AIForm, extra=3)
+
+class CommentForm(forms.ModelForm):
+    rating = forms.IntegerField(
+        min_value=1,
+        max_value=5,
+        widget=forms.HiddenInput(attrs={'data-rating-input': 'true'})
+    )
+
+    class Meta:
+        model = Comment
+        fields = ('content', 'rating',)
+        labels = {'content': ''}
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'card shadow-sm rounded-4 p-3 my-3',
+                'rows': 3,
+                'maxlength': 300,
+                'style': 'resize: none;',
+                'placeholder': 'Оставьте комментарий...',
+            }),
+        }
+

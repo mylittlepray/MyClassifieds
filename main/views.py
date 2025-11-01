@@ -1,3 +1,6 @@
+from nickname_gen.generator import Generator
+from nickname_gen.words import RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS
+
 from django.contrib import messages 
 from django.contrib.auth.views import LoginView , LogoutView, PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
@@ -5,7 +8,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 
-from django.http import HttpResponse, Http404,  HttpResponseNotAllowed
+from django.http import HttpResponse, Http404
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template 
 
@@ -18,7 +21,7 @@ from django.shortcuts import redirect
 from django.core.signing import BadSignature
 from django.core.paginator import Paginator
 
-from django.db.models import Q
+from django.db.models import Q, Avg, Count
 from functools import reduce
 from operator import and_
 
@@ -26,10 +29,12 @@ from .utilities import signer
 from .models import SubRubric
 from .models import AdvUser
 from .models import SubRubric, Bb 
+from .models import Comment
 
 from .forms import SearchForm 
 from .forms import ProfileEditForm, RegisterForm
 from .forms import BbForm, AIFormSet
+from .forms import CommentForm
 
 # Create your views here.
 class BBLoginView(LoginView):
@@ -127,18 +132,84 @@ def other_page(request, page):
         raise Http404()
     return HttpResponse(template.render(request=request))
 
-def bb_detail(request, rubric_pk, pk): 
-    bb = get_object_or_404(Bb, pk=pk) 
-    ais = bb.additionalimage_set.all() 
-    context = {'bb': bb, 'ais': ais} 
-    
-    return render(request, 'main/bb_detail.html', context) 
+def bb_detail(request, rubric_pk, pk):
+    bb = get_object_or_404(Bb, pk=pk)
+    ais = bb.additionalimage_set.all()
+    comments = Comment.objects.filter(bb=bb, is_active=True)
+    rating_stats = comments.aggregate(
+        avg_rating=Avg('rating'),
+        rating_count=Count('id')
+    )
+    avg_rating_value = float(rating_stats['avg_rating']) if rating_stats['avg_rating'] is not None else 0.0
+    rating_count = rating_stats['rating_count'] or 0
+    full_stars = int(avg_rating_value)
+    if full_stars > 5:
+        full_stars = 5
+    has_half_star = full_stars < 5 and (avg_rating_value - full_stars) >= 0.5
+    empty_stars = max(5 - full_stars - (1 if has_half_star else 0), 0)
+    full_star_range = range(full_stars)
+    empty_star_range = range(empty_stars)
+    avg_rating = round(avg_rating_value, 1) if rating_count else 0
+    if rating_count:
+        avg_rating_text = f'{avg_rating:.1f} из 5'
+        last_digit = rating_count % 10
+        last_two_digits = rating_count % 100
+        if last_digit == 1 and last_two_digits != 11:
+            rating_label = f'{rating_count} оценка'
+        elif last_digit in (2, 3, 4) and not 12 <= last_two_digits <= 14:
+            rating_label = f'{rating_count} оценки'
+        else:
+            rating_label = f'{rating_count} оценок'
+    else:
+        avg_rating_text = 'Нет оценок'
+        rating_label = ''
+    form = CommentForm()
+
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            if request.user.is_authenticated:
+                comment.author = request.user.username
+            else:
+                author = request.session.get('anonymous_author')
+                if not author:
+                    author = Generator.get_random_ru_nickname(combos=[RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS])
+                    request.session['anonymous_author'] = author
+                comment.author = author
+            comment.bb = bb
+            comment.save()
+            messages.add_message(request, messages.SUCCESS, 'Комментарий добавлен')
+            return redirect(request.get_full_path_info())
+        else:
+            messages.add_message(request, messages.WARNING, 'Комментарий не добавлен')
+
+    context = {
+        'bb': bb,
+        'ais': ais,
+        'comments': comments,
+        'form': form,
+        'avg_rating': avg_rating,
+        'rating_count': rating_count,
+        'avg_rating_text': avg_rating_text,
+        'rating_label': rating_label,
+        'full_stars': full_stars,
+        'has_half_star': has_half_star,
+        'empty_stars': empty_stars,
+        'full_star_range': full_star_range,
+        'empty_star_range': empty_star_range,
+        'rating_range': range(1, 6),
+    }
+    return render(request, 'main/bb_detail.html', context)
 
 @login_required
 def profile_bb_detail(request, rubric_pk, pk): 
     bb = get_object_or_404(Bb, pk=pk) 
     ais = bb.additionalimage_set.all() 
-    context = {'bb': bb, 'ais': ais} 
+
+    comments = Comment.objects.filter(bb=bb, is_active=True)
+
+    context = {'bb': bb, 'ais': ais, 'comments': comments} 
     
     return render(request, 'main/profile_bb_detail.html', context) 
 

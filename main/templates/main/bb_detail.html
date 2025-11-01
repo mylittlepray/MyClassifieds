@@ -1,5 +1,18 @@
 {% extends 'layout/basic.html' %}
+{% load static %}
+{% load django_bootstrap5 %}
 {% load humanize %}
+
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="{% static 'main/bb_detail.css' %}">
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+<script src="{% static 'js/bb_detail.js' %}"></script>
+{% endblock %}
 
 {% block title %}{{ bb.title }} - {{ bb.rubric.name }}{% endblock %}
 
@@ -54,9 +67,29 @@
     <!-- Заголовок и описание -->
     <div class="row mb-4">
         <div class="col-md-12 mx-auto">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm rounded-4 p-3">
                 <div class="card-body">
                     <h2 class="card-title">{{ bb.title }}</h2>
+                    <div class="rating-summary mb-2" aria-label="{{ avg_rating_text }}{% if rating_label %}. {{ rating_label }}{% endif %}">
+                        <span class="rating-summary__stars">
+                            {% for _ in full_star_range %}
+                                <i class="fas fa-star"></i>
+                            {% endfor %}
+                            {% if has_half_star %}
+                                <i class="fas fa-star-half-alt"></i>
+                            {% endif %}
+                            {% for _ in empty_star_range %}
+                                <i class="far fa-star"></i>
+                            {% endfor %}
+                        </span>
+                        <span class="rating-summary__text ms-2 text-muted">
+                            {% if rating_count %}
+                                {{ avg_rating_text }}{% if rating_label %} / {{ rating_label }}{% endif %}
+                            {% else %}
+                                {{ avg_rating_text }}
+                            {% endif %}
+                        </span>
+                    </div>
                     <p class="card-text">{{ bb.content }}</p>
                     <p class="fw-bold fs-5">{{ bb.price|intcomma }} ₽</p>
                     <p>{{ bb.contacts }}</p>
@@ -65,7 +98,67 @@
             </div>
         </div>
     </div>
+  
+  <div class="card shadow-sm rounded-4 p-3 my-3">   
+  <h4 class="card-title">Комментарии</h4> 
+  <form method="post">
+    {% csrf_token %}
+    <div class="card shadow-sm rounded-4 p-3 my-3">
+        <div class="rating-control{% if form.rating.errors %} is-invalid{% endif %}"
+             data-rating-control
+             role="radiogroup"
+             aria-label="Выберите оценку">
+            {% for star in rating_range %}
+                <button type="button"
+                        class="rating-star"
+                        data-rating-star="{{ star }}"
+                        aria-label="{{ star }} из 5"
+                        aria-checked="false"
+                        role="radio">
+                    <i class="far fa-star"></i>
+                </button>
+            {% endfor %}
+        </div>
+        {{ form.rating }}
+        {% if form.rating.errors %}
+            <div class="invalid-feedback d-block">
+                {{ form.rating.errors|join:', ' }}
+            </div>
+        {% endif %}
+    </div>
+    {% bootstrap_field form.content show_label=False %}
+    {% bootstrap_button 'Отправить' %}
+  </form>
+
+  {% if comments %}
+  <div class="vstack gap-3 mt-5">
+    {% for comment in comments %}
+    <div class="p-3 border rounded-4 shadow-sm">
+      <h5>{{ comment.author }}</h5>
+      <div class="rating-display d-flex align-items-center" aria-label="Оценка {{ comment.rating }} из 5">
+          <span class="rating-display__stars">
+              {% for star in rating_range %}
+                  {% if star <= comment.rating %}
+                      <i class="fas fa-star"></i>
+                  {% else %}
+                      <i class="far fa-star"></i>
+                  {% endif %}
+              {% endfor %}
+          </span>
+          <span class="rating-display__value ms-2 text-muted small">{{ comment.rating }} из 5</span>
+      </div>
+      <p style="word-wrap: break-word; overflow-wrap: anywhere;">
+        {{ comment.content|linebreaksbr }}
+      </p>
+      <p class="text-end fst-italic">{{ comment.created_at }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %} 
 </div>
+</div>
+
+
 
 <!-- Модальное окно для увеличения фото -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
@@ -77,17 +170,5 @@
     </div>
   </div>
 </div>
-
-<!-- JS для отображения фото в модалке -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const imageModal = document.getElementById('imageModal');
-  imageModal.addEventListener('show.bs.modal', function (event) {
-    const img = event.relatedTarget;
-    const modalImg = imageModal.querySelector('#modalImage');
-    modalImg.src = img.getAttribute('data-img');
-  });
-});
-</script>
 
 {% endblock %}

@@ -14,6 +14,7 @@
 	<link rel="stylesheet" href="{% static 'main/style.css' %}">
 	{% bootstrap_css %}
 	{% bootstrap_javascript %}
+	{% block extra_head %}{% endblock %}
 </head>
 <body>
 
@@ -112,5 +113,6 @@
 	</div>
 </footer>
 
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

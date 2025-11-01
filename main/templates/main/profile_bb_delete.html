@@ -10,6 +10,6 @@
 <form method="post">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Удалить</button>
-    <a href="{% url 'main:profile_my_bbs' %}" class="btn btn-secondary">Отмена</a>
+    <a href="{% url 'main:profile_my_bbs' %}" class="btn btn-outline-dark">Отмена</a>
 </form>
 {% endblock %}

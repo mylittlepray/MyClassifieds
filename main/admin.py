@@ -6,7 +6,7 @@ from .forms import SubRubricForm
 
 from .models import AdvUser
 from .models import SuperRubric, SubRubric 
-from .models import Bb, AdditionalImage
+from .models import Bb, AdditionalImage, Comment
 from .utilities import send_activation_notification
 
 # Register your models here.
@@ -81,7 +81,17 @@ class BbAdmin(admin.ModelAdmin):
 	fields = (('rubric', 'author'), 'title', 'content', 'price', 'contacts', 'image', 'is_active') 
 	inlines = (AdditionalImageInline,) 
 
+@admin.action(description='Снять с публикации')
+def make_inactive(modeladmin, request, queryset):
+    queryset.update(is_active=False)
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('author', 'content', 'is_active', 'created_at')
+    list_filter = ('bb',)
+    actions = [make_inactive]
+
 admin.site.register(SubRubric, SubRubricAdmin)
 admin.site.register(SuperRubric, SuperRubricAdmin)
 admin.site.register(AdvUser, AdvUserAdmin)
 admin.site.register(Bb, BbAdmin)
+admin.site.register(Comment, CommentAdmin)

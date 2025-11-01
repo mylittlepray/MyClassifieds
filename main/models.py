@@ -86,3 +86,16 @@ class Bb(models.Model):
 class AdditionalImage(models.Model):
     bb = models.ForeignKey(Bb, on_delete=models.CASCADE)
     image = models.ImageField(upload_to=get_timestamp_path, verbose_name='Изображение')
+
+class Comment(models.Model):
+   bb = models.ForeignKey(Bb, on_delete=models.CASCADE, verbose_name='Объявление')
+   author = models.CharField(max_length=30, verbose_name='Автор')
+   content = models.TextField(verbose_name='Содержание')
+   rating = models.IntegerField(default=0, verbose_name='Оценка', validators=[MinValueValidator(0), MaxValueValidator(5)])
+   is_active = models.BooleanField(default=True, db_index=True, verbose_name='Выводить на экран?')
+   created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Опубликован')
+   
+   class Meta:
+      verbose_name_plural = 'Комментарии'
+      verbose_name = 'Комментарий'
+      ordering = ['-created_at'] 
