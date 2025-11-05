@@ -163,10 +163,10 @@ def bb_detail(request, rubric_pk, pk):
     else:
         avg_rating_text = 'Нет оценок'
         rating_label = ''
-    form = CommentForm()
+    form = CommentForm(request=request)
 
     if request.method == 'POST':
-        form = CommentForm(request.POST)
+        form = CommentForm(request.POST, request=request)
         if form.is_valid():
             comment = form.save(commit=False)
             if request.user.is_authenticated:

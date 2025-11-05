@@ -127,6 +127,9 @@
         {% endif %}
     </div>
     {% bootstrap_field form.content show_label=False %}
+    {% if form.captcha %}
+        {% bootstrap_field form.captcha %}
+    {% endif %}
     {% bootstrap_button 'Отправить' %}
   </form>
 

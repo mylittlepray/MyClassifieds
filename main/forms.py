@@ -9,6 +9,8 @@ from django.core.exceptions import ValidationError
 from .signals import post_register 
 
 from captcha.fields import CaptchaField
+from captcha.fields import CaptchaTextInput
+
 from .models import Comment
 
 class RegisterForm(forms.ModelForm):
@@ -114,9 +116,23 @@ class CommentForm(forms.ModelForm):
         widget=forms.HiddenInput(attrs={'data-rating-input': 'true'})
     )
 
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        if not request or not request.user.is_authenticated:
+            self.fields['captcha'] = CaptchaField(
+                label='Введите текст с картинки   ',
+                error_messages={'invalid': 'Неправильный текст'},
+                widget=CaptchaTextInput(attrs={
+                    'class': 'form-control my-1 border rounded-4 shadow-sm',
+                    'placeholder': 'Введите текст',
+                    'style': 'max-width: 140px; text-align: center;'
+                })
+            )
+
     class Meta:
         model = Comment
-        fields = ('content', 'rating',)
+        fields = ('content', 'rating')
         labels = {'content': ''}
         widgets = {
             'content': forms.Textarea(attrs={
