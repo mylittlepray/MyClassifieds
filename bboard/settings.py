@@ -47,6 +47,7 @@ ALLOWED_HOSTS = []
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -55,6 +56,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'bboard.urls'
+
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_URLS_REGEX = r'^/api/.*$'
 
 TEMPLATES = [
     {
@@ -114,6 +118,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 INSTALLED_APPS = [
     'django.contrib.humanize',
     'main',
+    'api',
+    'rest_framework',
+    'corsheaders',
     'django_bootstrap5',
     'django_cleanup',
     'easy_thumbnails',
