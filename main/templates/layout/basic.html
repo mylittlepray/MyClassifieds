@@ -1,118 +1,150 @@
 {% load django_bootstrap5 %}
 {% load static %}
 
+
 <!doctype html>
 <html lang="ru">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>{% block title %}Электронная доска объявлений{% endblock %}</title>
-	<link rel="apple-touch-icon" sizes="180x180" href="{% static 'main/apple-touch-icon.png' %}">
-	<link rel="icon" type="image/png" sizes="32x32" href="{% static 'main/favicon-32x32.png' %}">
-	<link rel="icon" type="image/png" sizes="16x16" href="{% static 'main/favicon-16x16.png' %}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Электронная доска объявлений{% endblock %}</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'main/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'main/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'main/favicon-16x16.png' %}">
 	<link rel="manifest" href="{% static 'main/site.webmanifest' %}">
-	<link rel="stylesheet" href="{% static 'main/style.css' %}">
-	{% bootstrap_css %}
-	{% bootstrap_javascript %}
-	{% block extra_head %}{% endblock %}
+    
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'main/style.css' %}">
+    <link rel="stylesheet" href="{% static 'main/toast-notifications.css' %}">
+    
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-black mb-4">
-	<div class="container">
-		<a class="navbar-brand fw-bold" href="{% url 'main:index' %}">Объявления</a>
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'main:index' %}">Объявления</a>
 
-		<button class="btn btn-outline-light d-lg-none me-2"
-				type="button"
-				data-bs-toggle="offcanvas"
-				data-bs-target="#rubricOffcanvas"
-				aria-controls="rubricOffcanvas">
-			Категории
-		</button>
 
-		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
-				aria-controls="navbarMain" aria-expanded="false" aria-label="Меню">
-			<span class="navbar-toggler-icon"></span>
-		</button>
+        <button class="btn btn-outline-light d-lg-none me-2"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#rubricOffcanvas"
+                aria-controls="rubricOffcanvas">
+            Категории
+        </button>
 
-		<div class="collapse navbar-collapse" id="navbarMain">
-			<ul class="navbar-nav me-auto">
-				<li class="nav-item"><a class="nav-link" href="{% url 'main:other' page='about' %}">О сайте</a></li>
-			</ul>
 
-			<ul class="navbar-nav ms-auto">
-				{% if user.is_authenticated %}
-				<form action="{% url 'main:profile_bb_add' %}" method="get">
-					<button type="submit" class="btn btn-outline-light">Добавить</button>
-				</form>
-					<li class="nav-item dropdown">
-						<a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button"
-						   data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
-						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
-							<li><a class="dropdown-item" href="{% url 'main:profile' %}">Мой профиль</a></li>
-							<li><a class="dropdown-item" href="{% url 'main:profile_my_bbs' %}">Мои объявления</a></li>
-							<li><hr class="dropdown-divider"></li>
-							<li>
-								<form method="post" action="{% url 'main:logout' %}" class="d-inline">
-									{% csrf_token %}
-									<button type="submit" class="dropdown-item text-danger">Выйти</button>
-								</form>
-							</li>
-						</ul>
-					</li>
-				{% else %}
-					<li class="nav-item"><a class="nav-link" href="{% url 'main:login' %}">Вход</a></li>
-					<li class="nav-item"><a class="nav-link" href="{% url 'main:register' %}">Регистрация</a></li>
-				{% endif %}
-			</ul>
-		</div>
-	</div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                aria-controls="navbarMain" aria-expanded="false" aria-label="Меню">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'main:other' page='about' %}">О сайте</a></li>
+            </ul>
+
+
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                <form action="{% url 'main:profile_bb_add' %}" method="get">
+                    <button type="submit" class="btn btn-outline-light">Добавить</button>
+                </form>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
+                            <li><a class="dropdown-item" href="{% url 'main:profile' %}">Мой профиль</a></li>
+                            <li><a class="dropdown-item" href="{% url 'main:profile_my_bbs' %}">Мои объявления</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'main:logout' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">Выйти</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'main:login' %}">Вход</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'main:register' %}">Регистрация</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
 </nav>
 
+
 <header class="bg-black text-white py-5 mb-4" style="background: url({% static 'main/bg.jpg' %}) center/cover no-repeat;">
-	<div class="container text-center">
-		<h1 class="display-4 fw-bold">Электронная доска объявлений</h1>
-		<p class="lead">Ищи, находи и публикуй — всё в одном месте</p>
-	</div>
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold">Электронная доска объявлений</h1>
+        <p class="lead">Ищи, находи и публикуй — всё в одном месте</p>
+    </div>
 </header>
 
+<!-- Уведомления -->
+{% if messages %}
+<div class="toast-container" id="toastContainer">
+    {% for message in messages %}
+        <div class="custom-toast toast-{{ message.tags }}">
+            <span class="toast-icon">
+                {% if message.level == 10 %}🐛
+                {% elif message.level == 20 %}ℹ️
+                {% elif message.level == 25 %}✅
+                {% elif message.level == 30 %}⚠️
+                {% elif message.level == 40 %}❌
+                {% endif %}
+            </span>
+            <div class="toast-message">{{ message }}</div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="offcanvas offcanvas-start" tabindex="-1" id="rubricOffcanvas" aria-labelledby="rubricOffcanvasLabel">
-	<div class="offcanvas-header bg-black text-white">
-		<h5 class="offcanvas-title" id="rubricOffcanvasLabel">Категории</h5>
-		<button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
-	</div>
-	<div class="offcanvas-body">
-		{% include "includes/_rubric_list.html" %}
-	</div>
+    <div class="offcanvas-header bg-black text-white">
+        <h5 class="offcanvas-title" id="rubricOffcanvasLabel">Категории</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+    </div>
+    <div class="offcanvas-body">
+        {% include "includes/_rubric_list.html" %}
+    </div>
 </div>
 
+
 <main class="container">
-	{% bootstrap_messages %}
+    <div class="row">
+        <aside class="col-lg-3 d-none d-lg-block">
+            <div class="position-sticky" style="top: 1rem;">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-black text-white fw-semibold">Категории</div>
+                    <div class="card-body p-0">
+                        {% include "includes/_rubric_list.html" %}
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-	<div class="row">
-		<aside class="col-lg-3 d-none d-lg-block">
-			<div class="position-sticky" style="top: 1rem;">
-				<div class="card border-0 shadow-sm">
-					<div class="card-header bg-black text-white fw-semibold">Категории</div>
-					<div class="card-body p-0">
-						{% include "includes/_rubric_list.html" %}
-					</div>
-				</div>
-			</div>
-		</aside>
 
-		<section class="col-lg-9">
-			{% block content %}{% endblock %}
-		</section>
-	</div>
+        <section class="col-lg-9">
+            {% block content %}{% endblock %}
+        </section>
+    </div>
 </main>
 
+
 <footer class="bg-black text-white text-center py-3 mt-4">
-	<div class="container">
-		<small>© 2025 Электронная доска объявлений</small>
-	</div>
+    <div class="container">
+        <small>© 2025 Электронная доска объявлений</small>
+    </div>
 </footer>
 
+
+{% bootstrap_javascript %}
+<script src="{% static 'main/toast-notifications.js' %}"></script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

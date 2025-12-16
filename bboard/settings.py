@@ -14,26 +14,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-MEDIA_ROOT = BASE_DIR / 'media' 
-MEDIA_URL = '/media/' 
 
 
-THUMBNAIL_ALIASES = { 
-    '': { 
-        'default': { 
-            'size': (96, 96), 
-            'crop': 'scale', 
-            }, 
-        }, 
-    } 
-THUMBNAIL_BASEDIR = 'thumbnails'
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# ==============================================================================
+# CORE SETTINGS
+# ==============================================================================
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
@@ -43,7 +32,38 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# Application definition
+ROOT_URLCONF = 'bboard.urls'
+
+WSGI_APPLICATION = 'bboard.wsgi.application'
+
+
+# ==============================================================================
+# APPLICATION DEFINITION
+# ==============================================================================
+
+INSTALLED_APPS = [
+    # Django apps
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    
+    # Third-party apps
+    'rest_framework',
+    'corsheaders',
+    'django_bootstrap5',
+    'django_cleanup',
+    'easy_thumbnails',
+    'captcha',
+    
+    # Local apps
+    'main',
+    'api',
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -55,10 +75,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'bboard.urls'
 
-CORS_ALLOW_ALL_ORIGINS = True 
-CORS_URLS_REGEX = r'^/api/.*$'
+# ==============================================================================
+# TEMPLATES
+# ==============================================================================
 
 TEMPLATES = [
     {
@@ -76,21 +96,23 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'bboard.wsgi.application'
 
+# ==============================================================================
+# DATABASE
+# ==============================================================================
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'bboard.sqlite3',
-        'ATOMIC_REQUESTS': True,
+        'ATOMIC_REQUESTS': True,  # Автоматические транзакции для всех view
     }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+
+# ==============================================================================
+# PASSWORD VALIDATION
+# ==============================================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -108,31 +130,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
+# ==============================================================================
+# INTERNATIONALIZATION
+# ==============================================================================
+
 LANGUAGE_CODE = 'ru-RU'
-
-AUTH_USER_MODEL = 'main.AdvUser'
-LOGOUT_REDIRECT_URL = 'main:index' 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-INSTALLED_APPS = [
-    'django.contrib.humanize',
-    'main',
-    'api',
-    'rest_framework',
-    'corsheaders',
-    'django_bootstrap5',
-    'django_cleanup',
-    'easy_thumbnails',
-    'captcha',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-]
 
 TIME_ZONE = 'UTC'
 
@@ -141,17 +143,138 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# ==============================================================================
+# STATIC FILES & MEDIA
+# ==============================================================================
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ==============================================================================
+# THUMBNAILS (easy_thumbnails)
+# ==============================================================================
+
+THUMBNAIL_ALIASES = {
+    '': {
+        'default': {
+            'size': (96, 96),
+            'crop': 'scale',
+        },
+    },
+}
+THUMBNAIL_BASEDIR = 'thumbnails'
+
+
+# ==============================================================================
+# AUTHENTICATION & AUTHORIZATION
+# ==============================================================================
+
+AUTH_USER_MODEL = 'main.AdvUser'
+
+LOGOUT_REDIRECT_URL = 'main:index'
+
+
+# ==============================================================================
+# SESSIONS
+# ==============================================================================
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'  # Хранение в Redis
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 1209600  # 2 недели
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = not DEBUG  # True только для HTTPS
+
+
+# ==============================================================================
+# MESSAGES FRAMEWORK
+# ==============================================================================
+
+MESSAGE_LEVEL = 10  # DEBUG - показывать все уровни сообщений
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+
+# ==============================================================================
+# CACHING (Redis)
+# ==============================================================================
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True,  # Fallback при недоступности Redis
+        },
+        'KEY_PREFIX': 'bboard',
+        'TIMEOUT': 300,  # 5 минут по умолчанию
+    }
+}
+
+
+# ==============================================================================
+# LOGGING
+# ==============================================================================
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'main.cache_utils': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'main.api_views': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+
+# ==============================================================================
+# EMAIL
+# ==============================================================================
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# ==============================================================================
+# CORS (Cross-Origin Resource Sharing)
+# ==============================================================================
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_URLS_REGEX = r'^/api/.*$'
+
+
+# ==============================================================================
+# COOKIES (для анонимных пользователей)
+# ==============================================================================
 
 ANON_AUTHOR_COOKIE_NAME = "anon_author"
-ANON_AUTHOR_COOKIE_MAX_AGE = 60*60*24*365
+ANON_AUTHOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 год
 COOKIE_SALT = "anon-author-v1"
+
+
+# ==============================================================================
+# OTHER
+# ==============================================================================
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

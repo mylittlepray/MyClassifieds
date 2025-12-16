@@ -2,7 +2,7 @@ from nickname_gen.generator import Generator
 from nickname_gen.words import RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS
 
 from django.contrib import messages 
-from django.contrib.auth.views import LoginView , LogoutView, PasswordChangeView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,10 +14,12 @@ from django.template.loader import get_template
 
 from django.views.generic.base import TemplateView 
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
+
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect, get_object_or_404
 
 from django.core import signing
+from django.core.cache import cache
 from django.core.paginator import Paginator
 
 from django.conf import settings
@@ -37,23 +39,43 @@ from .forms import ProfileEditForm, RegisterForm
 from .forms import BbForm, AIFormSet
 from .forms import CommentForm
 
+from .cache_utils import generate_cache_key, get_cached_or_set
+
 COOKIE_KEY = getattr(settings, "ANON_AUTHOR_COOKIE_NAME", "anon_author")
 COOKIE_MAX_AGE = getattr(settings, "ANON_AUTHOR_COOKIE_MAX_AGE", 60*60*24*365)
 COOKIE_SALT = getattr(settings, "COOKIE_SALT", "anon-author-v1")
 
-# Create your views here.
+
+# ==================== КЛАССЫ ПРЕДСТАВЛЕНИЙ ====================
+
 class BBLoginView(LoginView):
-    template_name = 'main/login.html' 
+    template_name = 'main/login.html'
+    
+    def form_valid(self, form):
+        """Добавляем приветственное сообщение при успешном входе"""
+        messages.success(self.request, f'Добро пожаловать, {form.get_user().username}!')
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """Сообщение об ошибке входа"""
+        messages.error(self.request, 'Неверное имя пользователя или пароль')
+        return super().form_invalid(form)
+
 
 class BBLogoutView(LogoutView):
-    pass
+    def dispatch(self, request, *args, **kwargs):
+        """Сообщение при выходе"""
+        if request.user.is_authenticated:
+            messages.info(request, 'Вы успешно вышли из системы')
+        return super().dispatch(request, *args, **kwargs)
+
 
 class ProfileEditView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     model = AdvUser
     template_name = 'main/profile_edit.html'
     form_class = ProfileEditForm
     success_url = reverse_lazy('main:profile')
-    success_message = 'Данные пользователя изменены'
+    success_message = '✅ Данные профиля успешно обновлены'
     
     def setup(self, request, *args, **kwargs):
         self.user_id = request.user.pk
@@ -62,113 +84,198 @@ class ProfileEditView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         if not queryset:
             queryset = self.get_queryset()
-            
-        return get_object_or_404(queryset, pk=self.user_id) 
+        return get_object_or_404(queryset, pk=self.user_id)
+    
+    def form_invalid(self, form):
+        """Сообщение об ошибках валидации"""
+        messages.error(self.request, 'Не удалось сохранить изменения. Проверьте правильность заполнения полей')
+        return super().form_invalid(form)
+
 
 class PasswordEditView(SuccessMessageMixin, LoginRequiredMixin, PasswordChangeView):
     template_name = 'main/password_edit.html'
     success_url = reverse_lazy('main:profile')
-    success_message = 'Пароль пользователя изменен' 
+    success_message = '🔒 Пароль успешно изменен'
+    
+    def form_valid(self, form):
+        messages.info(self.request, 'Рекомендуем выйти и войти заново с новым паролем')
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Ошибка при смене пароля. Проверьте правильность текущего пароля')
+        return super().form_invalid(form)
+
 
 class RegisterView(CreateView):
     model = AdvUser
     template_name = 'main/register.html'
     form_class = RegisterForm
-    success_url = reverse_lazy('main:register_done') 
+    success_url = reverse_lazy('main:register_done')
+    
+    def form_valid(self, form):
+        """Сообщения при успешной регистрации"""
+        messages.success(self.request, 'Регистрация прошла успешно!')
+        messages.info(self.request, 'На вашу почту отправлено письмо с инструкциями по активации аккаунта')
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Ошибка при регистрации. Проверьте правильность заполнения формы')
+        if 'username' in form.errors:
+            messages.warning(self.request, 'Пользователь с таким именем уже существует')
+        if 'email' in form.errors:
+            messages.warning(self.request, 'Пользователь с таким email уже зарегистрирован')
+        return super().form_invalid(form)
+
 
 class RegisterDoneView(TemplateView):
-    template_name = 'main/register_done.html' 
+    template_name = 'main/register_done.html'
+
 
 class ProfileDeleteView(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
     model = AdvUser
     template_name = 'main/profile_delete.html'
     success_url = reverse_lazy('main:index')
-    success_message = 'Пользователь удален'
+    success_message = 'Ваш аккаунт успешно удален'
     
     def setup(self, request, *args, **kwargs):
         self.user_id = request.user.pk
         return super().setup(request, *args, **kwargs)
     
     def post(self, request, *args, **kwargs):
+        messages.warning(request, 'Ваш профиль и все связанные данные удалены')
         logout(request)
         return super().post(request, *args, **kwargs)
     
     def get_object(self, queryset=None):
         if not queryset:
             queryset = self.get_queryset()
-            return get_object_or_404(queryset, pk=self.user_id) 
+        return get_object_or_404(queryset, pk=self.user_id)
+
+
+# ==================== ФУНКЦИОНАЛЬНЫЕ ПРЕДСТАВЛЕНИЯ ====================
+
 def index(request):
-    bbs = Bb.objects.filter(is_active=True)  # Все активные объявления
-
-    # Поиск по ключевому слову
+    """Главная страница со списком объявлений с кешированием"""
     keyword = request.GET.get('keyword', '')
-    if keyword:
-        # Split by space and filter out empty strings
-        keywords = [word for word in keyword.split() if word]
-        if keywords:
-            # Create a Q object for each keyword
-            q_objects = []
-            for kw in keywords:
-                q_objects.append(Q(title__icontains=kw) | Q(content__icontains=kw))
-            
-            # Combine the Q objects with AND
-            if q_objects:
-                bbs = bbs.filter(reduce(and_, q_objects))
-
-    form = SearchForm(initial={'keyword': keyword})
-    paginator = Paginator(bbs, 5)  # например, 5 объявлений на страницу
-
     page_number = request.GET.get('page', 1)
+    
+    cache_key = generate_cache_key('index_page', keyword, page_number)
+    
+    def get_bbs_data():
+        """Внутренняя функция для получения данных (выполняется при cache miss)"""
+        bbs = Bb.objects.filter(is_active=True).select_related('rubric')
+        
+        if keyword:
+            keywords = [word for word in keyword.split() if word]
+            if keywords:
+                q_objects = []
+                for kw in keywords:
+                    q_objects.append(Q(title__icontains=kw) | Q(content__icontains=kw))
+                
+                if q_objects:
+                    bbs = bbs.filter(reduce(and_, q_objects))
+        
+        return list(bbs.values_list('pk', flat=True))
+    
+    bb_ids = get_cached_or_set(cache_key, get_bbs_data, timeout=300)
+    
+    if bb_ids:
+        preserved = {pk: i for i, pk in enumerate(bb_ids)}
+        bbs = Bb.objects.filter(pk__in=bb_ids).select_related('rubric')
+        bbs = sorted(bbs, key=lambda obj: preserved[obj.pk])
+    else:
+        bbs = []
+    
+    if keyword and request.method == 'GET' and bbs:
+        messages.info(request, f'Найдено объявлений: {len(bbs)}')
+    
+    form = SearchForm(initial={'keyword': keyword})
+    paginator = Paginator(bbs, 5)
     page = paginator.get_page(page_number)
-
+    
     context = {
         'bbs': page.object_list,
         'page': page,
         'form': form,
         'keyword': keyword,
     }
-
+    
     return render(request, 'main/index.html', context)
 
 def other_page(request, page):
+    """Отображение статических страниц"""
     try:
         template = get_template('main/' + page + '.html')
     except TemplateDoesNotExist:
+        messages.error(request, f'Страница "{page}" не найдена')
         raise Http404()
     return HttpResponse(template.render(request=request))
 
 def bb_detail(request, rubric_pk, pk):
-    bb = get_object_or_404(Bb, pk=pk)
-    ais = bb.additionalimage_set.all()
-    comments = Comment.objects.filter(bb=bb, is_active=True)
-    rating_stats = comments.aggregate(
-        avg_rating=Avg('rating'),
-        rating_count=Count('id')
-    )
-    avg_rating_value = float(rating_stats['avg_rating']) if rating_stats['avg_rating'] is not None else 0.0
-    rating_count = rating_stats['rating_count'] or 0
-    full_stars = int(avg_rating_value)
-    if full_stars > 5:
-        full_stars = 5
-    has_half_star = full_stars < 5 and (avg_rating_value - full_stars) >= 0.5
-    empty_stars = max(5 - full_stars - (1 if has_half_star else 0), 0)
-    full_star_range = range(full_stars)
-    empty_star_range = range(empty_stars)
-    avg_rating = round(avg_rating_value, 1) if rating_count else 0
-    if rating_count:
-        avg_rating_text = f'{avg_rating:.1f} из 5'
-        last_digit = rating_count % 10
-        last_two_digits = rating_count % 100
-        if last_digit == 1 and last_two_digits != 11:
-            rating_label = f'{rating_count} оценка'
-        elif last_digit in (2, 3, 4) and not 12 <= last_two_digits <= 14:
-            rating_label = f'{rating_count} оценки'
+    """Детальный просмотр объявления с комментариями и кешированием"""
+    cache_key_bb = generate_cache_key('bb_detail', pk)
+    
+    def get_bb_data():
+        """Получение данных объявления с дополнительными изображениями"""
+        bb = get_object_or_404(Bb, pk=pk)
+        ais = bb.additionalimage_set.all()
+        return {'bb': bb, 'ais': ais}
+    
+    bb_data = get_cached_or_set(cache_key_bb, get_bb_data, timeout=600)
+    bb = bb_data['bb']
+    ais = bb_data['ais']
+    
+    comments = Comment.objects.filter(bb=bb, is_active=True).select_related('bb')
+    
+    cache_key_rating = generate_cache_key('bb_rating', pk)
+    
+    def get_rating_stats():
+        """Вычисление статистики рейтинга"""
+        rating_stats = comments.aggregate(
+            avg_rating=Avg('rating'),
+            rating_count=Count('id')
+        )
+        avg_rating_value = float(rating_stats['avg_rating']) if rating_stats['avg_rating'] is not None else 0.0
+        rating_count = rating_stats['rating_count'] or 0
+        full_stars = int(avg_rating_value)
+        if full_stars > 5:
+            full_stars = 5
+        has_half_star = full_stars < 5 and (avg_rating_value - full_stars) >= 0.5
+        empty_stars = max(5 - full_stars - (1 if has_half_star else 0), 0)
+        avg_rating = round(avg_rating_value, 1) if rating_count else 0
+        
+        if rating_count:
+            avg_rating_text = f'{avg_rating:.1f} из 5'
+            last_digit = rating_count % 10
+            last_two_digits = rating_count % 100
+            if last_digit == 1 and last_two_digits != 11:
+                rating_label = f'{rating_count} оценка'
+            elif last_digit in (2, 3, 4) and not 12 <= last_two_digits <= 14:
+                rating_label = f'{rating_count} оценки'
+            else:
+                rating_label = f'{rating_count} оценок'
         else:
-            rating_label = f'{rating_count} оценок'
-    else:
-        avg_rating_text = 'Нет оценок'
-        rating_label = ''
+            avg_rating_text = 'Нет оценок'
+            rating_label = ''
+        
+        return {
+            'avg_rating': avg_rating,
+            'rating_count': rating_count,
+            'avg_rating_text': avg_rating_text,
+            'rating_label': rating_label,
+            'full_stars': full_stars,
+            'has_half_star': has_half_star,
+            'empty_stars': empty_stars,
+            'full_star_range': range(full_stars),
+            'empty_star_range': range(empty_stars),
+        }
+    
+    rating_data = get_cached_or_set(cache_key_rating, get_rating_stats, timeout=120)
+    
     form = CommentForm(request=request)
+
+    if not request.user.is_authenticated and settings.DEBUG:
+        messages.debug(request, f'Просмотр объявления #{pk} как гость')
 
     if request.method == 'POST':
         form = CommentForm(request.POST, request=request)
@@ -183,15 +290,21 @@ def bb_detail(request, rubric_pk, pk):
                     author = Generator.get_random_ru_nickname(
                         combos=[RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS]
                     )
+                    messages.info(request, f'Вам присвоен временный ник: {author}')
                 comment.author = author
 
             comment.bb = bb
             comment.save()
-            messages.add_message(request, messages.SUCCESS, 'Комментарий добавлен')
+            
+            messages.success(request, '✅ Комментарий успешно добавлен!')
+            
+            if comment.rating:
+                messages.info(request, f'Ваша оценка: {comment.rating} из 5')
+            
+            cache.delete(cache_key_rating)
 
             response = redirect(request.get_full_path_info())
 
-            # В cookie кладём ASCII-safe подписанное значение
             if not request.user.is_authenticated:
                 cookie_value = signing.dumps(comment.author, salt=COOKIE_SALT)
                 response.set_cookie(
@@ -204,91 +317,113 @@ def bb_detail(request, rubric_pk, pk):
                 )
             return response
         else:
-            messages.add_message(request, messages.WARNING, 'Комментарий не добавлен')
+            messages.error(request, '❌ Не удалось добавить комментарий')
+            if 'captcha' in form.errors:
+                messages.warning(request, '⚠️ CAPTCHA введена неверно. Попробуйте еще раз')
+            if 'content' in form.errors:
+                messages.warning(request, 'Поле "Текст комментария" обязательно для заполнения')
 
     context = {
         'bb': bb,
         'ais': ais,
         'comments': comments,
         'form': form,
-        'avg_rating': avg_rating,
-        'rating_count': rating_count,
-        'avg_rating_text': avg_rating_text,
-        'rating_label': rating_label,
-        'full_stars': full_stars,
-        'has_half_star': has_half_star,
-        'empty_stars': empty_stars,
-        'full_star_range': full_star_range,
-        'empty_star_range': empty_star_range,
         'rating_range': range(1, 6),
+        **rating_data
     }
     return render(request, 'main/bb_detail.html', context)
 
 @login_required
-def profile_bb_detail(request, rubric_pk, pk): 
-    bb = get_object_or_404(Bb, pk=pk) 
-    ais = bb.additionalimage_set.all() 
-
+def profile_bb_detail(request, rubric_pk, pk):
+    """Просмотр собственного объявления"""
+    bb = get_object_or_404(Bb, pk=pk)
+    ais = bb.additionalimage_set.all()
     comments = Comment.objects.filter(bb=bb, is_active=True)
 
-    context = {'bb': bb, 'ais': ais, 'comments': comments} 
-    
-    return render(request, 'main/profile_bb_detail.html', context) 
+    context = {'bb': bb, 'ais': ais, 'comments': comments}
+    return render(request, 'main/profile_bb_detail.html', context)
 
 def user_activate(request, sign):
+    """Активация аккаунта пользователя"""
     try:
         username = signer.unsign(sign)
     except signing.BadSignature:
+        messages.error(request, '❌ Ссылка активации недействительна или устарела')
         return render(request, 'main/activation_failed.html')
     
     user = get_object_or_404(AdvUser, username=username)
     if user.is_activated:
+        messages.info(request, 'Ваш аккаунт уже был активирован ранее')
         template = 'main/activation_done_earlier.html'
     else:
-        template = 'main/activation_done.html'
-        
         user.is_active = True
         user.is_activated = True
         user.save()
         
-    return render(request, template) 
+        messages.success(request, f'✅ Аккаунт {username} успешно активирован!')
+        messages.info(request, 'Теперь вы можете войти в систему')
+        template = 'main/activation_done.html'
+        
+    return render(request, template)
 
 def rubric_bbs(request, pk):
-    rubric = get_object_or_404(SubRubric, pk=pk) 
-    bbs = Bb.objects.filter(is_active=True, rubric=pk) 
+    """Объявления в конкретной рубрике с кешированием"""
+    rubric = get_object_or_404(SubRubric, pk=pk)
+    keyword = request.GET.get('keyword', '')
+    page_num = request.GET.get('page', 1)
     
-    if 'keyword' in request.GET: 
-        keyword = request.GET['keyword'] 
-        q = Q(title__icontains=keyword) | Q(content__icontains=keyword) 
-        bbs = bbs.filter(q) 
-    else: 
-        keyword = ''
-
-    form = SearchForm(initial={'keyword': keyword}) 
-    paginator = Paginator(bbs, 2) 
+    cache_key = generate_cache_key('rubric_bbs', pk, keyword, page_num)
+    
+    def get_rubric_bbs():
+        """Получение объявлений рубрики"""
+        bbs = Bb.objects.filter(is_active=True, rubric=pk).select_related('author', 'rubric')
         
-    if 'page' in request.GET: 
-        page_num = request.GET['page'] 
-    else: 
-        page_num = 1 
+        if keyword:
+            q = Q(title__icontains=keyword) | Q(content__icontains=keyword)
+            bbs = bbs.filter(q)
+        
+        return list(bbs.values_list('pk', flat=True))
     
-    page = paginator.get_page(page_num) 
-    context = {'rubric': rubric, 'page': page, 'bbs': page.object_list, 'form': form} 
+    bb_ids = get_cached_or_set(cache_key, get_rubric_bbs, timeout=300)
+    
+    if bb_ids:
+        preserved = {pk: i for i, pk in enumerate(bb_ids)}
+        bbs = Bb.objects.filter(pk__in=bb_ids).select_related('author', 'rubric')
+        bbs = sorted(bbs, key=lambda obj: preserved[obj.pk])
+    else:
+        bbs = []
+    
+    if keyword:
+        if bbs:
+            messages.info(request, f'В рубрике "{rubric.name}" найдено: {len(bbs)}')
+        else:
+            messages.warning(request, f'В рубрике "{rubric.name}" ничего не найдено по запросу "{keyword}"')
+    
+    form = SearchForm(initial={'keyword': keyword})
+    paginator = Paginator(bbs, 2)
+    page = paginator.get_page(page_num)
+    
+    context = {'rubric': rubric, 'page': page, 'bbs': page.object_list, 'form': form}
     
     return render(request, 'main/rubric_bbs.html', context)
 
 @login_required
 def profile(request):
-    return render(request, 'main/profile.html') 
+    """Профиль пользователя"""
+    return render(request, 'main/profile.html')
 
 @login_required
 def profile_my_bbs(request):
-    bbs = Bb.objects.filter(author=request.user.pk) 
-    context = {'bbs': bbs} 
-    return render(request, 'main/profile_my_bbs.html', context) 
+    """Мои объявления"""
+    bbs = Bb.objects.filter(author=request.user.pk)
+    if not bbs.exists():
+        messages.info(request, 'У вас пока нет объявлений. Создайте первое!')
+    context = {'bbs': bbs}
+    return render(request, 'main/profile_my_bbs.html', context)
 
 @login_required
 def profile_bb_add(request):
+    """Добавление нового объявления"""
     if request.method == 'POST':
         form = BbForm(request.POST, request.FILES)
         formset = AIFormSet(request.POST, request.FILES)
@@ -297,49 +432,84 @@ def profile_bb_add(request):
             bb = form.save(commit=False)
             bb.author = request.user
             bb.save()
-            raise Exception('Test Exception in profile_bb_add')
+            
             formset.instance = bb
             formset.save()
-            messages.success(request, 'Объявление успешно добавлено!')
-            return redirect('main:profile')
+            
+            messages.success(request, '✅ Объявление успешно добавлено!')
+            messages.info(request, f'Объявление опубликовано в рубрике "{bb.rubric}"')
+            
+            if formset.total_form_count() > 0:
+                messages.info(request, f'Загружено дополнительных изображений: {formset.total_form_count()}')
+            
+            return redirect('main:profile_my_bbs')
         else:
-            messages.error(request, 'Исправьте ошибки в форме.')
+            messages.error(request, '❌ Не удалось добавить объявление')
+            
+            if form.errors:
+                messages.warning(request, 'Проверьте правильность заполнения основной формы')
+                for field, errors in form.errors.items():
+                    if field != '__all__':
+                        messages.warning(request, f'{form[field].label}: {", ".join(errors)}')
+            
+            if formset.errors:
+                messages.warning(request, 'Ошибки при загрузке дополнительных изображений')
     else:
         form = BbForm(initial={'author': request.user.pk})
         formset = AIFormSet()
 
     return render(request, 'main/profile_bb_add.html', {'form': form, 'formset': formset})
 
-@login_required 
-def profile_bb_edit(request, pk): 
-    bb = get_object_or_404(Bb, pk=pk) 
+@login_required
+def profile_bb_edit(request, pk):
+    """Редактирование объявления"""
+    bb = get_object_or_404(Bb, pk=pk)
     
-    if request.method == 'POST': 
-        form = BbForm(request.POST, request.FILES, instance=bb) 
-        if form.is_valid(): 
-            bb = form.save(commit=False) 
-            bb.author = request.user 
-            bb.save() 
-            formset = AIFormSet(request.POST, request.FILES, instance=bb) 
-            if formset.is_valid(): 
-                formset.save() 
-                messages.add_message(request, messages.SUCCESS, 'Объявление исправлено') 
+    # Проверка прав доступа
+    if bb.author != request.user:
+        messages.error(request, '❌ У вас нет прав для редактирования этого объявления')
+        return redirect('main:profile_my_bbs')
+    
+    if request.method == 'POST':
+        form = BbForm(request.POST, request.FILES, instance=bb)
+        if form.is_valid():
+            bb = form.save(commit=False)
+            bb.author = request.user
+            bb.save()
+            formset = AIFormSet(request.POST, request.FILES, instance=bb)
+            if formset.is_valid():
+                formset.save()
+                messages.success(request, '✅ Объявление успешно обновлено')
+                messages.info(request, 'Все изменения сохранены')
                 return redirect('main:profile_my_bbs')
-    else: 
-        form = BbForm(instance=bb) 
-        formset = AIFormSet(instance=bb) 
-
-    context = {'form': form, 'formset': formset} 
-    return render(request, 'main/profile_bb_edit.html', context)  
-
- 
-@login_required 
-def profile_bb_delete(request, pk): 
-    bb = get_object_or_404(Bb, pk=pk) 
-    if request.method == 'POST': 
-        bb.delete() 
-        messages.add_message(request, messages.SUCCESS, 'Объявление удалено') 
-        return redirect('main:profile_my_bbs') 
+            else:
+                messages.error(request, 'Ошибка при обновлении дополнительных изображений')
+        else:
+            messages.error(request, '❌ Не удалось обновить объявление')
+            messages.warning(request, 'Проверьте правильность заполнения формы')
     else:
-        context = {'bb': bb} 
+        form = BbForm(instance=bb)
+        formset = AIFormSet(instance=bb)
+
+    context = {'form': form, 'formset': formset}
+    return render(request, 'main/profile_bb_edit.html', context)
+
+@login_required
+def profile_bb_delete(request, pk):
+    """Удаление объявления"""
+    bb = get_object_or_404(Bb, pk=pk)
+    
+    # Проверка прав доступа
+    if bb.author != request.user:
+        messages.error(request, '❌ У вас нет прав для удаления этого объявления')
+        return redirect('main:profile_my_bbs')
+    
+    if request.method == 'POST':
+        bb_title = bb.title
+        bb.delete()
+        messages.success(request, f'✅ Объявление "{bb_title}" удалено')
+        messages.info(request, 'Все связанные изображения и комментарии также удалены')
+        return redirect('main:profile_my_bbs')
+    else:
+        context = {'bb': bb}
         return render(request, 'main/profile_bb_delete.html', context)

@@ -1,14 +1,18 @@
+{% load cache %}
+
+{# Кешируем HTML рубрик на 1 час (3600 секунд) #}
+{% cache 3600 rubric_sidebar %}
 <div class="list-group border-0 p-2">
-	{% for rubric in rubrics %}
-	{% ifchanged rubric.super_rubric.pk %}
-	<div class="mt-4 mb-1 text-uppercase">
-		{{ rubric.super_rubric.name }}
-	</div>
-	{% endifchanged %}
+    {% for rubric in rubrics %}
+    {% ifchanged rubric.super_rubric.pk %}
+    <div class="mt-4 mb-1 text-uppercase">
+        {{ rubric.super_rubric.name }}
+    </div>
+    {% endifchanged %}
 
     <a href="{% url 'main:rubric_bbs' pk=rubric.pk %}" class="list-group-item border-0 px-2 py-1 rounded-3">
-		{{ rubric.name }}
-	</a>
-	{% endfor %}
+        {{ rubric.name }}
+    </a>
+    {% endfor %}
 </div>
-
+{% endcache %}

@@ -20,6 +20,7 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('captcha/', include('captcha.urls')), 
+    path('api/async/', include('main.urls_async')),
     path('api/', include('api.urls')),
     path('', include('main.urls')),
 ]
