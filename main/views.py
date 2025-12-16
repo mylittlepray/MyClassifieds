@@ -275,6 +275,7 @@ def profile_bb_add(request):
             bb = form.save(commit=False)
             bb.author = request.user
             bb.save()
+            raise Exception('Test Exception in profile_bb_add')
             formset.instance = bb
             formset.save()
             messages.success(request, 'Объявление успешно добавлено!')
