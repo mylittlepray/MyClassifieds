@@ -15,17 +15,18 @@ from django.template.loader import get_template
 from django.views.generic.base import TemplateView 
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
 from django.urls import reverse_lazy
-from django.shortcuts import render, get_object_or_404
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect, get_object_or_404
 
-from django.core.signing import BadSignature
+from django.core import signing
 from django.core.paginator import Paginator
+
+from django.conf import settings
 
 from django.db.models import Q, Avg, Count
 from functools import reduce
 from operator import and_
 
-from .utilities import signer
+from .utilities import signer, get_anon_author_from_cookie
 from .models import SubRubric
 from .models import AdvUser
 from .models import SubRubric, Bb 
@@ -35,6 +36,10 @@ from .forms import SearchForm
 from .forms import ProfileEditForm, RegisterForm
 from .forms import BbForm, AIFormSet
 from .forms import CommentForm
+
+COOKIE_KEY = getattr(settings, "ANON_AUTHOR_COOKIE_NAME", "anon_author")
+COOKIE_MAX_AGE = getattr(settings, "ANON_AUTHOR_COOKIE_MAX_AGE", 60*60*24*365)
+COOKIE_SALT = getattr(settings, "COOKIE_SALT", "anon-author-v1")
 
 # Create your views here.
 class BBLoginView(LoginView):
@@ -169,18 +174,35 @@ def bb_detail(request, rubric_pk, pk):
         form = CommentForm(request.POST, request=request)
         if form.is_valid():
             comment = form.save(commit=False)
+
             if request.user.is_authenticated:
                 comment.author = request.user.username
             else:
-                author = request.session.get('anonymous_author')
+                author = get_anon_author_from_cookie(request, COOKIE_KEY, COOKIE_SALT, COOKIE_MAX_AGE)
                 if not author:
-                    author = Generator.get_random_ru_nickname(combos=[RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS])
-                    request.session['anonymous_author'] = author
+                    author = Generator.get_random_ru_nickname(
+                        combos=[RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS]
+                    )
                 comment.author = author
+
             comment.bb = bb
             comment.save()
             messages.add_message(request, messages.SUCCESS, 'Комментарий добавлен')
-            return redirect(request.get_full_path_info())
+
+            response = redirect(request.get_full_path_info())
+
+            # В cookie кладём ASCII-safe подписанное значение
+            if not request.user.is_authenticated:
+                cookie_value = signing.dumps(comment.author, salt=COOKIE_SALT)
+                response.set_cookie(
+                    COOKIE_KEY,
+                    cookie_value,
+                    max_age=COOKIE_MAX_AGE,
+                    httponly=True,
+                    samesite="Lax",
+                    secure=not settings.DEBUG,
+                )
+            return response
         else:
             messages.add_message(request, messages.WARNING, 'Комментарий не добавлен')
 
@@ -216,7 +238,7 @@ def profile_bb_detail(request, rubric_pk, pk):
 def user_activate(request, sign):
     try:
         username = signer.unsign(sign)
-    except BadSignature:
+    except signing.BadSignature:
         return render(request, 'main/activation_failed.html')
     
     user = get_object_or_404(AdvUser, username=username)

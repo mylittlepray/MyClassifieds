@@ -150,3 +150,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+ANON_AUTHOR_COOKIE_NAME = "anon_author"
+ANON_AUTHOR_COOKIE_MAX_AGE = 60*60*24*365
+COOKIE_SALT = "anon-author-v1"

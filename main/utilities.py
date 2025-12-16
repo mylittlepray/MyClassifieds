@@ -1,5 +1,5 @@
 from django.template.loader import render_to_string
-from django.core.signing import Signer
+from django.core.signing import Signer, BadSignature, loads
 from django.conf import settings 
 
 from datetime import datetime 
@@ -30,3 +30,31 @@ def send_new_comment_notification(comment):
 
 def get_timestamp_path(instance, filename): 
     return '%s%s' % (datetime.now().timestamp(), splitext(filename)[1])
+
+def get_anon_author_from_cookie(request, cookie_key, cookie_salt, cookie_max_age):
+    raw = request.COOKIES.get(cookie_key)
+    if not raw:
+        return None
+    try:
+        return loads(raw, salt=cookie_salt, max_age=cookie_max_age)
+    except BadSignature:
+        return None
+
+def get_signed_cookie(request, key: str) -> str | None:
+    value = request.COOKIES.get(key)
+    if not value:
+        return None
+    try:
+        return signer.unsign(value)
+    except BadSignature:
+        return None
+
+def set_signed_cookie(response, key: str, plain_value: str, *, max_age: int, secure: bool):
+    response.set_cookie(
+        key,
+        signer.sign(plain_value),
+        max_age=max_age,
+        httponly=True,
+        samesite="Lax",
+        secure=secure,
+    )
