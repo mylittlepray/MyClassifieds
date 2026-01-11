@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django_extensions',
     
     # Third-party apps
     'rest_framework',
@@ -207,13 +208,12 @@ CACHES = {
         'LOCATION': 'redis://localhost:6379/1',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'IGNORE_EXCEPTIONS': True,  # Fallback при недоступности Redis
+            'IGNORE_EXCEPTIONS': True,
         },
         'KEY_PREFIX': 'bboard',
-        'TIMEOUT': 300,  # 5 минут по умолчанию
+        'TIMEOUT': 300,
     }
 }
-
 
 # ==============================================================================
 # LOGGING
