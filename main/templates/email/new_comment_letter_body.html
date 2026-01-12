@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;padding:24px;">
+      <div style="background:#ffffff;border-radius:12px;padding:24px;border:1px solid #e6e9f2;">
+        <div style="margin-bottom:16px;">
+          <img src="{{ host }}/static/img/logo.png" alt="MyClassifieds" height="36">
+        </div>
+
+        <h2 style="margin:0 0 12px 0;color:#111827;">Новый комментарий</h2>
+        <p style="margin:0 0 16px 0;color:#374151;">
+          Под вашим объявлением оставили новую оценку.
+        </p>
+
+        <div style="background:#f9fafb;border:1px solid #eef2ff;border-radius:10px;padding:14px;">
+          <div style="color:#111827;margin-bottom:6px;">
+            <b>Пользователь:</b> {{ comment.author }}
+          </div>
+          <div style="color:#111827;margin-bottom:6px;">
+            <b>Оценка:</b> {{ comment.rating }}
+          </div>
+          <div style="color:#111827;white-space:pre-wrap;">
+            <b>Комментарий:</b> {{ comment.content }}
+          </div>
+        </div>
+
+        <div style="margin-top:18px;">
+          <a href="{{ host }}{{ comment.bb.get_absolute_url }}"
+             style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;
+                    padding:12px 18px;border-radius:10px;">
+            Открыть объявление
+          </a>
+        </div>
+
+        <p style="margin:18px 0 0 0;color:#6b7280;font-size:12px;">
+          Если вы не ожидаете эти уведомления, просто игнорируйте письмо.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

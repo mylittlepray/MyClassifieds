@@ -2,33 +2,42 @@ from django.template.loader import render_to_string
 from django.core.signing import Signer, BadSignature, loads
 from django.conf import settings 
 
+from django.core.mail import EmailMultiAlternatives
+
 from datetime import datetime 
 from os.path import splitext 
 
 signer = Signer()
 
 def send_activation_notification(user):
-    if settings.ALLOWED_HOSTS:
-        host = 'http://' + settings.ALLOWED_HOSTS[0] 
-    else:
-        host = 'http://localhost:8000'
-        
-    context = {'user': user, 'host': host, 'sign': signer.sign(user.username)}
-    subject = render_to_string('email/activation_letter_subject.txt', context)
-    body_text = render_to_string('email/activation_letter_body.txt', context)
-    user.email_user(subject, body_text)
+    host = "https://" + settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else "http://localhost:8000"
+    context = {"user": user, "host": host, "sign": signer.sign(user.username)}
+
+    subject = render_to_string("email/activation_letter_subject.txt", context).strip()
+    text_body = render_to_string("email/activation_letter_body.txt", context)
+    html_body = render_to_string("email/activation_letter_body.html", context)
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        to=[user.email],
+    )
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
 
 def send_new_comment_notification(comment):
-    if settings.ALLOWED_HOSTS:
-        host = 'http://' + settings.ALLOWED_HOSTS[0]
-    else:
-        host = 'http://localhost:8000'
+    host = "https://" + settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else "http://localhost:8000"
 
     author = comment.bb.author
-    context = {'author': author, 'host': host, 'comment': comment}
-    subject = render_to_string('email/new_comment_letter_subject.txt', context)
-    body_text = render_to_string('email/new_comment_letter_body.txt', context)
-    author.email_user(subject, body_text) 
+    context = {"author": author, "host": host, "comment": comment}
+
+    subject = render_to_string("email/new_comment_letter_subject.txt", context).strip()
+    text_body = render_to_string("email/new_comment_letter_body.txt", context)
+    html_body = render_to_string("email/new_comment_letter_body.html", context)
+
+    msg = EmailMultiAlternatives(subject=subject, body=text_body, to=[author.email])
+    msg.attach_alternative(html_body, "text/html")
+    msg.send(fail_silently=False)
 
 def get_timestamp_path(instance, filename): 
     return '%s%s' % (datetime.now().timestamp(), splitext(filename)[1])
