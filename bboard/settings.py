@@ -255,12 +255,12 @@ LOGGING = {
 # ==============================================================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_HOST = "smtp.mailersend.net"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = "apikey"
-EMAIL_HOST_PASSWORD = os.getenv("SENDGRID_API_KEY")
+EMAIL_HOST_USER = os.getenv("MAILERSEND_USER")
+EMAIL_HOST_PASSWORD = os.getenv("MAILERSEND_KEY")
 
 DEFAULT_FROM_EMAIL = "noreply@myclassifieds.ru"
 
