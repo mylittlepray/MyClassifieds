@@ -255,7 +255,7 @@ LOGGING = {
 # ==============================================================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.mailersend.net"
+EMAIL_HOST = "connect.smtp.bz"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
