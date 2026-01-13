@@ -9,10 +9,8 @@
 
 {% block content %}
 <h2 class="mb-3">Мои объявления</h2>
-{% get_current_timezone as tzname %}
 {% if bbs %}
 <div class="vstack gap-3 my-4">
-  <small class="text-muted">TZ={{ tzname }}</small>
     {% for bb in bbs %}
     {% url 'main:bb_detail' rubric_pk=bb.rubric.pk pk=bb.pk as url %}
     <div class="card bbcard shadow border-0 rounded-4 overflow-hidden">

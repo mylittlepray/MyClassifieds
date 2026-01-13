@@ -1,6 +1,10 @@
 {% extends 'layout/basic.html' %}
+{% load tz %}
 {% block title %}Профиль пользователя{% endblock %}
 {% block content %}
+
+{% get_current_timezone as tzname %}
+
 <h2>Настройки профиля</h2>
 
 <div class="card p-3 m-3">
@@ -37,5 +41,6 @@
     </div>
 </div>
 
+<small class="text-muted">Ваш часовой пояс: {{ tzname }}</small>
 
 {% endblock %} 

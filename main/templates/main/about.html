@@ -4,6 +4,27 @@
 
 {% block content %}
 <h2>О сайте</h2>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
 <p>Сайт для публикации объявлений о продаже, разбитых на рубрики.</p>
-<p>Сайт выполнен: <b>tg: @mylittlepray</b></p>
+<div class="d-flex gap-2 flex-wrap">
+  <a href="https://t.me/mylittlepray"
+     class="btn text-white d-inline-flex align-items-center gap-2"
+     style="background:#269EDA;"
+     target="_blank" rel="noopener noreferrer">
+    <i class="bi bi-telegram"></i>
+    Telegram
+  </a>
+
+  <a href="https://github.com/mylittlepray"
+     class="btn btn-dark d-inline-flex align-items-center gap-2"
+     target="_blank" rel="noopener noreferrer">
+    <i class="bi bi-github"></i>
+    GitHub
+  </a>
+</div>
+
+
+
 {% endblock %}

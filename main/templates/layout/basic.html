@@ -48,15 +48,13 @@
 
             <ul class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
-                <form action="{% url 'main:profile_bb_add' %}" method="get">
-                    <button type="submit" class="btn btn-outline-light">Добавить</button>
-                </form>
+                <form action="{% url 'main:profile_bb_add' %}" method="get"><button type="submit" class="btn btn-outline-light mx-2">Добавить</button></form>
+                <form action="{% url 'main:profile_my_bbs' %}" method="get"><button type="submit" class="btn btn-light mx-2">Мои объявления</button></form>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button"
                            data-bs-toggle="dropdown" aria-expanded="false">{{ user.username }}</a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUser">
                             <li><a class="dropdown-item" href="{% url 'main:profile' %}">Мой профиль</a></li>
-                            <li><a class="dropdown-item" href="{% url 'main:profile_my_bbs' %}">Мои объявления</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="post" action="{% url 'main:logout' %}" class="d-inline">
@@ -74,7 +72,6 @@
         </div>
     </div>
 </nav>
-
 
 <header class="bg-black text-white py-5 mb-4" style="background: url({% static 'main/bg.jpg' %}) center/cover no-repeat;">
     <div class="container text-center">
