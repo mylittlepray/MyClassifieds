@@ -12,6 +12,7 @@ from captcha.fields import CaptchaField
 from captcha.fields import CaptchaTextInput
 
 from .models import Comment
+from .image_processor import process_image, ImageProcessingError
 
 class RegisterForm(forms.ModelForm):
     email = forms.EmailField(required=True, label='Адрес электронной почты')
@@ -74,7 +75,7 @@ class SearchForm(forms.Form):
 class BbForm(forms.ModelForm):
     class Meta:
         model = Bb
-        fields = ('rubric', 'title', 'content', 'price', 'contacts', 'image', 'is_active')
+        fields = ('rubric', 'title', 'content', 'price', 'contacts', 'image')
         widgets = {
             'rubric': forms.Select(attrs={'class': 'form-select'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 50}),
@@ -88,7 +89,6 @@ class BbForm(forms.ModelForm):
             }),
             'contacts': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 50}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean_price(self):
@@ -101,11 +101,42 @@ class BbForm(forms.ModelForm):
             raise forms.ValidationError('Максимальная цена — 999 999 999 999.99')
         return price
 
+    def clean_image(self):
+        """Обрабатывает загруженное изображение"""
+        image = self.cleaned_data.get('image')
+        
+        if not image:
+            return image
+        
+        try:
+            # Обрабатываем изображение (конвертируем, сжимаем)
+            processed_image = process_image(image)
+            return processed_image
+        except ImageProcessingError as e:
+            raise forms.ValidationError(
+                f'Ошибка при обработке изображения: {str(e)}'
+            )
+
 class AIForm(forms.ModelForm):
     class Meta:
         model = AdditionalImage
         fields = ('image',)
         widgets = {'image': forms.ClearableFileInput(attrs={'class': 'form-control'})}
+
+    def clean_image(self):
+        """Обрабатывает дополнительные изображения"""
+        image = self.cleaned_data.get('image')
+        
+        if not image:
+            return image
+        
+        try:
+            processed_image = process_image(image)
+            return processed_image
+        except ImageProcessingError as e:
+            raise forms.ValidationError(
+                f'Ошибка при обработке изображения: {str(e)}'
+            )
 
 AIFormSet = forms.inlineformset_factory(Bb, AdditionalImage, form=AIForm, extra=3)
 

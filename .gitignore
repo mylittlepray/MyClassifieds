@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# nginx
+staticfiles/
+media/
+.sqlite3
+
 # Distribution / packaging
 .Python
 build/
@@ -60,7 +65,6 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-staticfiles/
 
 # Flask stuff:
 instance/
