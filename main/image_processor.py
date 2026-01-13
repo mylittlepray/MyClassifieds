@@ -4,8 +4,12 @@ from io import BytesIO
 from pathlib import Path
 from typing import Tuple, Optional
 from PIL import Image
+from pillow_heif import register_heif_opener
+
 from django.core.files.uploadedfile import UploadedFile, InMemoryUploadedFile
 from django.core.exceptions import ValidationError
+
+register_heif_opener()
 
 logger = logging.getLogger(__name__)
 
