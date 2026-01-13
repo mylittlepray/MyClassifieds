@@ -85,10 +85,17 @@ class BbForm(forms.ModelForm):
                 'min': '0',
                 'max': '999999999999.99',
                 'step': '0.01',
+                'inputmode': 'decimal',   # мобилки: цифровая клавиатура + точка/запятая (если умеет)
+                'pattern': r'[0-9]*[.,]?[0-9]{0,2}',  # мягкая подсказка браузеру, не броня
                 'placeholder': 'до 1 000 000 000 000 (1 трлн)'
             }),
             'contacts': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 50}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'image': forms.ClearableFileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif',
+                'data-max-size': '5242880',
+                'data-preview-target': 'mainImagePreview',
+            }),
         }
 
     def clean_price(self):
@@ -121,7 +128,14 @@ class AIForm(forms.ModelForm):
     class Meta:
         model = AdditionalImage
         fields = ('image',)
-        widgets = {'image': forms.ClearableFileInput(attrs={'class': 'form-control'})}
+        widgets = {
+            'image': forms.ClearableFileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif',
+                'data-max-size': '5242880',
+                # preview target зададим в шаблоне через data-preview-target="{{ preview_id }}"
+            })
+        }
 
     def clean_image(self):
         """Обрабатывает дополнительные изображения"""

@@ -11,10 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const contactsInput = document.querySelector('input[name="contacts"]');
   const contactsCounter = document.getElementById('contactsCounter');
 
-  // Все file-input'ы, где задан data-max-size (мы их проставили в шаблоне)
-  const fileInputs = document.querySelectorAll('input[type="file"][data-max-size]');
+  const fileInputs = document.querySelectorAll('input[type="file"]');
 
-  // ===== helpers =====
   function setupCounter(input, counterElem, max) {
     if (!input || !counterElem) return;
     const update = () => {
@@ -28,12 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getExt(filename) {
     const idx = filename.lastIndexOf('.');
-    if (idx === -1) return '';
-    return filename.slice(idx).toLowerCase();
+    return idx === -1 ? '' : filename.slice(idx).toLowerCase();
   }
 
   function isLikelyAllowedImage(file) {
-    // MIME иногда пустой/нестабильный для HEIC, поэтому проверяем и расширение
+    // MIME у HEIC бывает нестабильным, поэтому проверяем и расширение
     const allowedMimes = new Set([
       'image/jpeg',
       'image/png',
@@ -41,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
       'image/heic',
       'image/heif'
     ]);
-
     const allowedExts = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
 
     const extOk = allowedExts.has(getExt(file.name));
@@ -49,11 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return extOk && mimeOk;
   }
 
-  function renderPreview(targetEl, file) {
-    if (!targetEl) return;
-    targetEl.innerHTML = '';
+  function renderPreview(previewEl, file) {
+    if (!previewEl) return;
+    previewEl.innerHTML = '';
 
-    // Превью через dataURL (для больших файлов может быть тяжело, но на 5MB терпимо)
     const reader = new FileReader();
     reader.onload = ev => {
       const img = document.createElement('img');
@@ -61,23 +56,22 @@ document.addEventListener('DOMContentLoaded', () => {
       img.className = 'img-thumbnail';
       img.style.maxWidth = '160px';
       img.style.maxHeight = '160px';
-      targetEl.appendChild(img);
+      previewEl.appendChild(img);
     };
     reader.readAsDataURL(file);
   }
 
-  // ===== counters =====
+  // counters
   setupCounter(titleInput, titleCounter, 50);
   setupCounter(contentInput, contentCounter, 600);
   setupCounter(contactsInput, contactsCounter, 50);
 
-  // ===== price validation =====
+  // price validation
   if (priceInput && priceHelp) {
     const defaultText = priceHelp.dataset.defaultText || priceHelp.textContent || '';
     priceInput.addEventListener('input', () => {
       const value = parseFloat(priceInput.value);
 
-      // Если пусто — вернём дефолтный текст
       if (priceInput.value.trim() === '' || Number.isNaN(value)) {
         priceInput.classList.remove('is-invalid');
         priceHelp.classList.remove('text-danger');
@@ -101,16 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ===== file validation + previews =====
+  // file validation + preview
   fileInputs.forEach(input => {
     input.addEventListener('change', function () {
       const file = this.files && this.files[0] ? this.files[0] : null;
 
-      // очистка превью если файл сняли
-      const targetId = this.dataset.previewTarget;
-      const targetEl = targetId ? document.getElementById(targetId) : null;
+      // preview id = preview-<input.id>
+      const previewEl = this.id ? document.getElementById(`preview-${this.id}`) : null;
+
       if (!file) {
-        if (targetEl) targetEl.innerHTML = '';
+        if (previewEl) previewEl.innerHTML = '';
         return;
       }
 
@@ -123,19 +117,18 @@ document.addEventListener('DOMContentLoaded', () => {
           `Ваш файл: ${(file.size / 1024 / 1024).toFixed(1)}MB`
         );
         this.value = '';
-        if (targetEl) targetEl.innerHTML = '';
+        if (previewEl) previewEl.innerHTML = '';
         return;
       }
 
       if (!isLikelyAllowedImage(file)) {
         alert('Неподдерживаемый формат. Разрешены: JPG, PNG, WebP, HEIC/HEIF.');
         this.value = '';
-        if (targetEl) targetEl.innerHTML = '';
+        if (previewEl) previewEl.innerHTML = '';
         return;
       }
 
-      // превью
-      renderPreview(targetEl, file);
+      renderPreview(previewEl, file);
     });
   });
 });
