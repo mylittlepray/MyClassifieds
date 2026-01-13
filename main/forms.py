@@ -93,7 +93,7 @@ class BbForm(forms.ModelForm):
             'image': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
                 'accept': 'image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif',
-                'data-max-size': '5242880',
+                'data-max-size': '10485760',
                 'data-preview-target': 'mainImagePreview',
             }),
         }
