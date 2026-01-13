@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const maxSize = parseInt(this.dataset.maxSize || '5242880', 10);
+      const maxSize = parseInt(this.dataset.maxSize || '10485760', 10);
 
       if (file.size > maxSize) {
         alert(
