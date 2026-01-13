@@ -56,36 +56,29 @@ class SubRubric(Rubric):
       verbose_name_plural = 'Подрубрики'
 
 class Bb(models.Model):
-    rubric = models.ForeignKey('SubRubric', on_delete=models.PROTECT, verbose_name='Рубрика')
-    title = models.CharField(max_length=50, verbose_name='Товар')
-    content = models.CharField(max_length=600, verbose_name='Описание')
-    price = models.FloatField(
-        default=0,
-        verbose_name='Цена',
-        validators=[
-            MinValueValidator(0),
-            MaxValueValidator(999999999999.99)
-        ]
-    )
-    contacts = models.CharField(max_length=50, verbose_name='Контакты')
-    image = models.ImageField(blank=True, upload_to=get_timestamp_path, verbose_name='Изображение')
-    author = models.ForeignKey(AdvUser, on_delete=models.CASCADE, verbose_name='Автор объявления')
-    is_active = models.BooleanField(default=True, db_index=True, verbose_name='Выводить в списке?')
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Опубликовано')
-
-    def delete(self, *args, **kwargs):
-        for ai in self.additionalimage_set.all():
-            ai.delete()
-        super().delete(*args, **kwargs)
-
-    class Meta:
-        verbose_name_plural = 'Объявления'
-        verbose_name = 'Объявление'
-        ordering = ['-created_at']
+   rubric = models.ForeignKey('SubRubric', on_delete=models.PROTECT, verbose_name='Рубрика')
+   title = models.CharField(max_length=50, verbose_name='Товар')
+   content = models.CharField(max_length=600, verbose_name='Описание')
+   price = models.FloatField(verbose_name='Цена', null=True, blank=True, default=None, validators=[MinValueValidator(0), MaxValueValidator(999999999999.99)])
+   contacts = models.CharField(max_length=50, verbose_name='Контакты')
+   image = models.ImageField(blank=True, upload_to=get_timestamp_path, verbose_name='Изображение')
+   author = models.ForeignKey(AdvUser, on_delete=models.CASCADE, verbose_name='Автор объявления')
+   is_active = models.BooleanField(default=True, db_index=True, verbose_name='Выводить в списке?')
+   created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Опубликовано')
+   
+   def delete(self, *args, **kwargs):
+      for ai in self.additionalimage_set.all():
+         ai.delete()
+      super().delete(*args, **kwargs)
+   
+   class Meta:
+      verbose_name_plural = 'Объявления'
+      verbose_name = 'Объявление'
+      ordering = ['-created_at']
 
 class AdditionalImage(models.Model):
-    bb = models.ForeignKey(Bb, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=get_timestamp_path, verbose_name='Изображение')
+   bb = models.ForeignKey(Bb, on_delete=models.CASCADE)
+   image = models.ImageField(upload_to=get_timestamp_path, verbose_name='Изображение')
 
 class Comment(models.Model):
    bb = models.ForeignKey(Bb, on_delete=models.CASCADE, verbose_name='Объявление')
