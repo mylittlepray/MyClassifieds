@@ -8,6 +8,7 @@ from pillow_heif import register_heif_opener
 
 from django.core.files.uploadedfile import UploadedFile, InMemoryUploadedFile
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 register_heif_opener()
 
@@ -16,8 +17,8 @@ logger = logging.getLogger(__name__)
 # Допустимые форматы
 ALLOWED_IMAGE_FORMATS = {'JPEG', 'PNG', 'WEBP', 'GIF', 'BMP', 'HEIC', 'HEIF'}
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.heic', '.heif'}
-MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB максимум
-MIN_IMAGE_QUALITY = 75  # Качество JPEG при сжатии
+MAX_IMAGE_SIZE = settings.IMAGE_MAX_SIZE_MB * 1024 * 1024 
+IMAGE_QUALITY = settings.IMAGE_QUALITY
 TARGET_MAX_DIMENSION = 2048  # Макс размер по длинной стороне
 
 
@@ -108,7 +109,7 @@ def process_image(file: UploadedFile) -> InMemoryUploadedFile:
         img.save(
             output,
             format='JPEG',
-            quality=MIN_IMAGE_QUALITY,
+            quality=IMAGE_QUALITY,
             optimize=True,
             progressive=True  # Progressive JPEG для лучшей загрузки в браузер
         )

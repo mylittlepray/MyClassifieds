@@ -299,7 +299,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
 
 # Время на обработку загрузки
 FILE_UPLOAD_TIMEOUT = 120  # 2 минуты
-
+ 
 # Временная директория для загрузок (на случай если media занята)
 FILE_UPLOAD_TEMP_DIR = BASE_DIR / 'media/tmp_uploads'
 
