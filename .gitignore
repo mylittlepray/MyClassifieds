@@ -9,7 +9,7 @@ __pycache__/
 # nginx
 staticfiles/
 media/
-.sqlite3
+*.sqlite3
 
 # Distribution / packaging
 .Python
