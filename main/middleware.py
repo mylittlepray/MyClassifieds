@@ -1,6 +1,11 @@
 import logging
+import zoneinfo
 
+from django.utils import timezone
 from django.contrib.messages import constants as message_constants
+
+from urllib.parse import unquote
+
 from .models import SubRubric
 from .cache_utils import generate_cache_key, get_cached_or_set
 
@@ -62,3 +67,18 @@ class ImageUploadErrorMiddleware:
             )
         
         return response
+
+class TimezoneMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        tzname = request.session.get("django_timezone")
+        if tzname:
+            try:
+                timezone.activate(zoneinfo.ZoneInfo(tzname))
+            except Exception:
+                timezone.deactivate()
+        else:
+            timezone.deactivate()
+        return self.get_response(request)

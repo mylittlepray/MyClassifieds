@@ -1,6 +1,5 @@
 {% load cache %}
 
-{# Кешируем HTML рубрик на 1 час (3600 секунд) #}
 {% cache 3600 rubric_sidebar %}
 <div class="list-group border-0 p-2">
     {% for rubric in rubrics %}

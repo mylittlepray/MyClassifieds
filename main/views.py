@@ -1,5 +1,4 @@
-from nickname_gen.generator import Generator
-from nickname_gen.words import RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS
+import zoneinfo
 
 from django.contrib import messages 
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
@@ -8,7 +7,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, JsonResponse, Http404
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template 
 
@@ -26,6 +25,10 @@ from django.core.paginator import Paginator
 from django.conf import settings
 
 from django.db.models import Q, Avg, Count
+
+from nickname_gen.generator import Generator
+from nickname_gen.words import RU_ADJECTIVES_WORDS, RU_ANIMALS_WORDS
+
 from functools import reduce
 from operator import and_
 
@@ -428,7 +431,6 @@ def profile_bb_add(request):
     if request.method == 'POST':
         form = BbForm(request.POST, request.FILES)
 
-        # Важно: formset нужно валидировать с instance, чтобы он работал корректно как inline-formset.
         bb = form.save(commit=False) if form.is_valid() else None
         formset = AIFormSet(request.POST, request.FILES, instance=bb)
 
@@ -440,7 +442,6 @@ def profile_bb_add(request):
             formset.instance = bb
             formset.save()
 
-            # Считаем только реально загруженные доп.изображения (а не total_form_count, который включает пустые extra)
             uploaded_count = 0
             for cd in (formset.cleaned_data or []):
                 if not cd:
@@ -459,7 +460,6 @@ def profile_bb_add(request):
 
         messages.error(request, '❌ Не удалось добавить объявление')
 
-        # Ошибки основной формы (более полные)
         if form.errors:
             messages.warning(request, 'Проверьте правильность заполнения основной формы')
             for field, errors in form.errors.items():
@@ -470,7 +470,6 @@ def profile_bb_add(request):
                     label = form.fields.get(field).label if field in form.fields else field
                     messages.warning(request, f'{label}: {", ".join(errors)}')
 
-        # Ошибки formset (и non_form_errors тоже)
         if formset.non_form_errors():
             messages.warning(request, 'Ошибки при загрузке дополнительных изображений')
             for e in formset.non_form_errors():
@@ -489,7 +488,6 @@ def profile_bb_add(request):
                     messages.warning(request, f'{label}: {", ".join(errors)}')
 
     else:
-        # initial author тут не нужен: поля author в BbForm нет, ты всё равно проставляешь bb.author перед save().
         form = BbForm()
         formset = AIFormSet()
 
@@ -500,7 +498,6 @@ def profile_bb_edit(request, pk):
     """Редактирование объявления"""
     bb = get_object_or_404(Bb, pk=pk)
     
-    # Проверка прав доступа
     if bb.author != request.user:
         messages.error(request, '❌ У вас нет прав для редактирования этого объявления')
         return redirect('main:profile_my_bbs')
@@ -534,7 +531,6 @@ def profile_bb_delete(request, pk):
     """Удаление объявления"""
     bb = get_object_or_404(Bb, pk=pk)
     
-    # Проверка прав доступа
     if bb.author != request.user:
         messages.error(request, '❌ У вас нет прав для удаления этого объявления')
         return redirect('main:profile_my_bbs')
@@ -563,3 +559,14 @@ def profile_bb_toggle_active(request, pk):
         messages.info(request, 'ℹ️ Объявление скрыто из общего списка')
 
     return redirect('main:profile_my_bbs')
+
+@require_POST
+def set_timezone(request):
+    tz = request.POST.get("timezone")
+    try:
+        zoneinfo.ZoneInfo(tz)
+    except Exception:
+        return JsonResponse({"ok": False, "error": "Invalid timezone"}, status=400)
+
+    request.session["django_timezone"] = tz
+    return JsonResponse({"ok": True, "timezone": tz})

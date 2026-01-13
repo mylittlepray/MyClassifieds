@@ -1,7 +1,6 @@
 {% load django_bootstrap5 %}
 {% load static %}
 
-
 <!doctype html>
 <html lang="ru">
 <head>
@@ -14,14 +13,13 @@
 	<link rel="manifest" href="{% static 'main/site.webmanifest' %}">
     
     {% bootstrap_css %}
-    <link rel="stylesheet" href="{% static 'main/style.css' %}">
-    <link rel="stylesheet" href="{% static 'main/toast-notifications.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/toast-notifications.css' %}">
     
     {% block extra_head %}{% endblock %}
 </head>
+
 <body>
-
-
 <nav class="navbar navbar-expand-lg navbar-dark bg-black">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{% url 'main:index' %}">Объявления</a>
@@ -85,7 +83,6 @@
     </div>
 </header>
 
-<!-- Уведомления -->
 {% if messages %}
 <div class="toast-container" id="toastContainer">
     {% for message in messages %}
@@ -144,7 +141,10 @@
 
 
 {% bootstrap_javascript %}
-<script src="{% static 'main/toast-notifications.js' %}"></script>
+<script src="{% static 'js/toast-notifications.js' %}"></script>
+<form style="display:none">{% csrf_token %}</form>
+<script>window.SET_TZ_URL = "{% url 'main:set_timezone' %}";</script>
+<script src="{% static 'js/timezone.js' %}"></script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

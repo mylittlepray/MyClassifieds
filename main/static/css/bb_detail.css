@@ -68,7 +68,6 @@
     font-size: 0.85rem;
 }
 
-/* Делаем так, чтобы модалка не была выше экрана */
 .image-modal__content {
   background: #000;
 }

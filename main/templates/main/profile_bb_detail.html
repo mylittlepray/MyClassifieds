@@ -2,6 +2,7 @@
 {% block title %}{{ bb.title }} - {{ bb.rubric.name }}{% endblock %} 
 {% block content %} 
 {% load humanize %}
+{% load tz %}
 
 <div class="row mt-3"> 
     {% if bb.image %} 
@@ -15,7 +16,7 @@
         <p>{{ bb.content }}</p> 
         <p class="fw-bold">{{ bb.price|intcomma }} ₽</p> 
         <p>{{ bb.contacts }}</p> 
-        <p class="text-end fst-italic">Добавлено {{ bb.created_at }}</p> 
+        <p class="text-end fst-italic">Добавлено {{ bb.created_at|localtime|date:"d.m.Y H:i"}}</p> 
     </div> 
 </div> 
 

@@ -2,11 +2,12 @@
 {% load static %}
 {% load django_bootstrap5 %}
 {% load humanize %}
+{% load tz %}
 
 {% block extra_head %}
 {{ block.super }}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<link rel="stylesheet" href="{% static 'main/bb_detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/bb_detail.css' %}">
 {% endblock %}
 
 {% block extra_scripts %}
@@ -14,7 +15,6 @@
 {% endblock %}
 
 {% block title %}{{ bb.title }} - {{ bb.rubric.name }}{% endblock %}
-
 
 {% block content %}
 <div class="text m-2">
@@ -92,7 +92,7 @@
                     <p class="card-text">{{ bb.content }}</p>
                     <p class="fw-bold fs-5">{{ bb.price|intcomma }} ₽</p>
                     <p>{{ bb.contacts }}</p>
-                    <p class="text-end text-muted fst-italic mb-0">Добавлено {{ bb.created_at }}</p>
+                    <p class="text-end text-muted fst-italic mb-0">Добавлено {{ bb.created_at|localtime|date:"d.m.Y H:i"}}</p>
                 </div>
             </div>
         </div>

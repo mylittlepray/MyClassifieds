@@ -114,7 +114,6 @@ def cache_view_result(timeout: int = 300, key_prefix: str = 'view'):
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
-            # Формируем ключ на основе URL и GET-параметров
             cache_key = generate_cache_key(
                 key_prefix,
                 request.path,

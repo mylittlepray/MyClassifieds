@@ -14,18 +14,15 @@ register_heif_opener()
 
 logger = logging.getLogger(__name__)
 
-# Допустимые форматы
 ALLOWED_IMAGE_FORMATS = {'JPEG', 'PNG', 'WEBP', 'GIF', 'BMP', 'HEIC', 'HEIF'}
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.heic', '.heif'}
 MAX_IMAGE_SIZE = settings.IMAGE_MAX_SIZE_MB * 1024 * 1024 
 IMAGE_QUALITY = settings.IMAGE_QUALITY
-TARGET_MAX_DIMENSION = 2048  # Макс размер по длинной стороне
-
+TARGET_MAX_DIMENSION = 2048
 
 class ImageProcessingError(Exception):
     """Ошибка при обработке изображения"""
     pass
-
 
 def validate_image_format(file: UploadedFile) -> None:
     """
@@ -37,7 +34,6 @@ def validate_image_format(file: UploadedFile) -> None:
     Raises:
         ValidationError: Если файл не является изображением или формат недопустим
     """
-    # Проверка расширения
     file_ext = Path(file.name).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
         raise ValidationError(
@@ -45,20 +41,17 @@ def validate_image_format(file: UploadedFile) -> None:
             f'Допустимые: {", ".join(ALLOWED_EXTENSIONS)}'
         )
     
-    # Проверка размера файла
     if file.size > MAX_IMAGE_SIZE:
         max_size_mb = MAX_IMAGE_SIZE / (1024 * 1024)
         raise ValidationError(
             f'Файл слишком большой. Максимум {max_size_mb:.1f}MB'
         )
     
-    # Проверка, что это действительно изображение
     try:
         file.seek(0)
         img = Image.open(file)
         img.verify()
         
-        # Проверяем формат
         if img.format not in ALLOWED_IMAGE_FORMATS:
             raise ValidationError(
                 f'Неподдерживаемый формат изображения: {img.format}'
@@ -85,13 +78,11 @@ def process_image(file: UploadedFile) -> InMemoryUploadedFile:
         ImageProcessingError: Если произошла ошибка при обработке
     """
     try:
-        # Проверяем формат
         validate_image_format(file)
         
         file.seek(0)
         img = Image.open(file)
         
-        # Конвертируем HEIC/HEIF в RGB (удаляем альфа-канал)
         if img.format in ('HEIC', 'HEIF') or img.mode in ('RGBA', 'LA', 'P'):
             rgb_img = Image.new('RGB', img.size, (255, 255, 255))
             if img.mode == 'P':
@@ -101,26 +92,22 @@ def process_image(file: UploadedFile) -> InMemoryUploadedFile:
         elif img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # Оптимизируем размер (уменьшаем если нужно)
         img = resize_image_if_needed(img)
         
-        # Сохраняем в BytesIO с сжатием
         output = BytesIO()
         img.save(
             output,
             format='JPEG',
             quality=IMAGE_QUALITY,
             optimize=True,
-            progressive=True  # Progressive JPEG для лучшей загрузки в браузер
+            progressive=True
         )
         
         output.seek(0)
         
-        # Генерируем новое имя файла с расширением .jpg
         original_name = Path(file.name).stem
         new_filename = f'{original_name}.jpg'
         
-        # Создаем InMemoryUploadedFile для возврата в Django
         processed_file = InMemoryUploadedFile(
             file=output,
             field_name=file.field_name,

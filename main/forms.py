@@ -1,11 +1,15 @@
+import re
+
+from decimal import Decimal, InvalidOperation
+
 from django import forms
+from django.contrib.auth import password_validation
+from django.core.exceptions import ValidationError
 
 from .models import AdvUser
 from .models import SuperRubric, SubRubric
 from .models import Bb, AdditionalImage 
 
-from django.contrib.auth import password_validation
-from django.core.exceptions import ValidationError
 from .signals import post_register 
 
 from captcha.fields import CaptchaField
@@ -73,6 +77,17 @@ class SearchForm(forms.Form):
     keyword = forms.CharField(required=False, max_length=20, label='') 
 
 class BbForm(forms.ModelForm):
+    price = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'inputmode': 'decimal',  
+            'pattern': r'[0-9\s.,]*',
+            'autocomplete': 'off',
+            'placeholder': 'до 1 000 000 000 000 (1 трлн)',
+        })
+    )
+
     class Meta:
         model = Bb
         fields = ('rubric', 'title', 'content', 'price', 'contacts', 'image')
@@ -80,15 +95,6 @@ class BbForm(forms.ModelForm):
             'rubric': forms.Select(attrs={'class': 'form-select'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 50}),
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'maxlength': 600}),
-            'price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '0',
-                'max': '999999999999.99',
-                'step': '0.01',
-                'inputmode': 'decimal',   # мобилки: цифровая клавиатура + точка/запятая (если умеет)
-                'pattern': r'[0-9]*[.,]?[0-9]{0,2}',  # мягкая подсказка браузеру, не броня
-                'placeholder': 'до 1 000 000 000 000 (1 трлн)'
-            }),
             'contacts': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 50}),
             'image': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
@@ -99,30 +105,39 @@ class BbForm(forms.ModelForm):
         }
 
     def clean_price(self):
-        price = self.cleaned_data.get('price')
-        if price is None:
-            return price
+        raw = self.cleaned_data.get('price')
+        if raw in (None, ''):
+            return None
+
+        s0 = str(raw).strip()
+        if not re.fullmatch(r'[0-9\s.,₽]+', s0):
+            raise forms.ValidationError('Цена может содержать только цифры, пробелы и запятую.')
+
+        s = s0.replace('₽', '').strip()
+        s = s.replace('\u00A0', ' ').replace('\u202F', ' ')
+        s = s.replace(' ', '')
+        s = s.replace(',', '.')
+        s = re.sub(r'[^0-9.]', '', s)
+
+        try:
+            price = Decimal(s)
+        except InvalidOperation:
+            raise forms.ValidationError('Введите цену в формате 1 234 567,90')
+
         if price < 0:
             raise forms.ValidationError('Цена не может быть отрицательной.')
-        if price > 999999999999.99:
+        if price > Decimal('999999999999.99'):
             raise forms.ValidationError('Максимальная цена — 999 999 999 999.99')
         return price
 
     def clean_image(self):
-        """Обрабатывает загруженное изображение"""
         image = self.cleaned_data.get('image')
-        
         if not image:
             return image
-        
         try:
-            # Обрабатываем изображение (конвертируем, сжимаем)
-            processed_image = process_image(image)
-            return processed_image
+            return process_image(image)
         except ImageProcessingError as e:
-            raise forms.ValidationError(
-                f'Ошибка при обработке изображения: {str(e)}'
-            )
+            raise forms.ValidationError(f'Ошибка при обработке изображения: {str(e)}')
 
 class AIForm(forms.ModelForm):
     class Meta:
@@ -133,7 +148,6 @@ class AIForm(forms.ModelForm):
                 'class': 'form-control',
                 'accept': 'image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif',
                 'data-max-size': '5242880',
-                # preview target зададим в шаблоне через data-preview-target="{{ preview_id }}"
             })
         }
 

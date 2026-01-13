@@ -2,6 +2,7 @@
 {% load thumbnail %}
 {% load static %}
 {% load humanize %}
+{% load tz %}
 
 <div class="vstack gap-3 my-4">
     {% for bb in bbs %}
@@ -22,7 +23,7 @@
                 <p class="card-text text-muted small mb-2">{{ bb.content|truncatechars:150 }}</p>
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="fw-semibold text-success">{{ bb.price|intcomma }} ₽</span>
-                    <span class="text-secondary small">{{ bb.created_at|date:"d.m.Y H:i" }}</span>
+                    <span class="text-secondary small">{{ bb.created_at|localtime|date:"d.m.Y H:i" }}</span>
                 </div>
             </div>
         </div>
