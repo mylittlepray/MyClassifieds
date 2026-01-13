@@ -1,5 +1,5 @@
 {% load django_bootstrap5 %}
-{% load django_bootstrap5 static %}
+{% load static %}
 
 <form method="post" enctype="multipart/form-data" novalidate>
   {% csrf_token %}
@@ -39,7 +39,9 @@
     <div class="mb-3">
       {{ form.price.label_tag }}
       {{ form.price }}
-      <div class="form-text text-muted" id="priceHelp">Цена: от 0 до 999 999 999 999.99 ₽</div>
+      <div class="form-text text-muted" id="priceHelp" data-default-text="Цена: от 0 до 999 999 999 999.99 ₽">
+        Цена: от 0 до 999 999 999 999.99 ₽
+      </div>
       {% if form.price.errors %}
         <div class="invalid-feedback d-block text-danger fw-bold">{{ form.price.errors.0 }}</div>
       {% endif %}
@@ -60,32 +62,71 @@
     <!-- Главное изображение -->
     <div class="mb-3">
       {{ form.image.label_tag }}
-      {{ form.image }}
-      {% if form.instance.image %}
-        <div class="mt-2">
-          <strong>Текущее изображение:</strong><br>
-          <img src="{{ form.instance.image.url }}" class="img-thumbnail mt-2" style="max-width:150px;">
-        </div>
-      {% endif %}
-      <div id="mainImagePreview" class="mt-2"></div>
-      <div class="form-text">Главное изображение товара</div>
+
+      {# Не хардкодим input вручную: используем Django field, но добавляем attrs #}
+      {{ form.image.as_widget(attrs={
+        "class": "form-control",
+        "accept": "image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif",
+        "data-max-size": "5242880",
+        "data-preview-target": "mainImagePreview"
+      }) }}
+
+      <small class="text-muted d-block mt-2">
+        Поддерживаемые форматы: JPG, PNG, WebP, HEIC/HEIF (до 5MB).<br>
+        Изображение будет автоматически сжато и оптимизировано.
+      </small>
+
+      <div id="mainImagePreview" class="mt-2 d-flex gap-2 flex-wrap"></div>
+
       {% if form.image.errors %}
-        <div class="invalid-feedback d-block text-danger">{{ form.image.errors.0 }}</div>
+        <div class="invalid-feedback d-block text-danger mt-2">{{ form.image.errors.0 }}</div>
       {% endif %}
     </div>
 
-    <!-- Активность -->
-    <div class="form-check mb-3">
-      {{ form.is_active }}
-      {{ form.is_active.label_tag }}
-    </div>
   </div>
 
   <!-- Дополнительные изображения -->
-  <h5 class="mb-3">Дополнительные изображения</h5>
   <div class="card shadow-sm p-4 mb-4">
-    {% bootstrap_formset formset layout='vertical' %}
-    <div id="extraPreviews" class="d-flex flex-wrap gap-3 mt-3"></div>
+    <div class="mb-2">
+      <label class="form-label">Дополнительные фото</label>
+
+      {{ formset.management_form }}
+
+      {% if formset.non_form_errors %}
+        <div class="alert alert-danger">
+          {% for e in formset.non_form_errors %}{{ e }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <div id="additional-images-container" class="d-grid gap-3">
+        {% for ai_form in formset %}
+          <div class="additional-image-form">
+            {% with preview_id="preview-"|add:ai_form.prefix %}
+              {{ ai_form.image.as_widget(attrs={
+                "class": "form-control",
+                "accept": "image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif",
+                "data-max-size": "5242880",
+                "data-preview-target": preview_id
+              }) }}
+
+              <div id="{{ preview_id }}" class="mt-2 d-flex gap-2 flex-wrap"></div>
+            {% endwith %}
+
+            {% if ai_form.non_field_errors %}
+              <small class="text-danger d-block mt-1">
+                {% for e in ai_form.non_field_errors %}❌ {{ e }}{% endfor %}
+              </small>
+            {% endif %}
+
+            {% if ai_form.image.errors %}
+              <small class="text-danger d-block mt-1">
+                {% for e in ai_form.image.errors %}❌ {{ e }}{% endfor %}
+              </small>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 
   <div class="text-end">

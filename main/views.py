@@ -14,6 +14,7 @@ from django.template.loader import get_template
 
 from django.views.generic.base import TemplateView 
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
+from django.views.decorators.http import require_POST
 
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect, get_object_or_404
@@ -423,39 +424,73 @@ def profile_my_bbs(request):
 
 @login_required
 def profile_bb_add(request):
-    """Добавление нового объявления"""
+    """Добавление нового объявления."""
     if request.method == 'POST':
         form = BbForm(request.POST, request.FILES)
-        formset = AIFormSet(request.POST, request.FILES)
+
+        # Важно: formset нужно валидировать с instance, чтобы он работал корректно как inline-formset.
+        bb = form.save(commit=False) if form.is_valid() else None
+        formset = AIFormSet(request.POST, request.FILES, instance=bb)
 
         if form.is_valid() and formset.is_valid():
-            bb = form.save(commit=False)
             bb.author = request.user
-            bb.save()
-            
+            bb.is_active = True
+            bb.save() 
+
             formset.instance = bb
             formset.save()
-            
+
+            # Считаем только реально загруженные доп.изображения (а не total_form_count, который включает пустые extra)
+            uploaded_count = 0
+            for cd in (formset.cleaned_data or []):
+                if not cd:
+                    continue
+                if cd.get('DELETE'):
+                    continue
+                if cd.get('image'):
+                    uploaded_count += 1
+
             messages.success(request, '✅ Объявление успешно добавлено!')
             messages.info(request, f'Объявление опубликовано в рубрике "{bb.rubric}"')
-            
-            if formset.total_form_count() > 0:
-                messages.info(request, f'Загружено дополнительных изображений: {formset.total_form_count()}')
-            
+            if uploaded_count:
+                messages.info(request, f'Загружено дополнительных изображений: {uploaded_count}')
+
             return redirect('main:profile_my_bbs')
-        else:
-            messages.error(request, '❌ Не удалось добавить объявление')
-            
-            if form.errors:
-                messages.warning(request, 'Проверьте правильность заполнения основной формы')
-                for field, errors in form.errors.items():
-                    if field != '__all__':
-                        messages.warning(request, f'{form[field].label}: {", ".join(errors)}')
-            
-            if formset.errors:
-                messages.warning(request, 'Ошибки при загрузке дополнительных изображений')
+
+        messages.error(request, '❌ Не удалось добавить объявление')
+
+        # Ошибки основной формы (более полные)
+        if form.errors:
+            messages.warning(request, 'Проверьте правильность заполнения основной формы')
+            for field, errors in form.errors.items():
+                if field == '__all__':
+                    for e in errors:
+                        messages.warning(request, str(e))
+                else:
+                    label = form.fields.get(field).label if field in form.fields else field
+                    messages.warning(request, f'{label}: {", ".join(errors)}')
+
+        # Ошибки formset (и non_form_errors тоже)
+        if formset.non_form_errors():
+            messages.warning(request, 'Ошибки при загрузке дополнительных изображений')
+            for e in formset.non_form_errors():
+                messages.warning(request, str(e))
+
+        for f in formset.forms:
+            if not f.errors:
+                continue
+            messages.warning(request, 'Ошибки при загрузке дополнительных изображений')
+            for field, errors in f.errors.items():
+                if field == '__all__':
+                    for e in errors:
+                        messages.warning(request, str(e))
+                else:
+                    label = f.fields.get(field).label if field in f.fields else field
+                    messages.warning(request, f'{label}: {", ".join(errors)}')
+
     else:
-        form = BbForm(initial={'author': request.user.pk})
+        # initial author тут не нужен: поля author в BbForm нет, ты всё равно проставляешь bb.author перед save().
+        form = BbForm()
         formset = AIFormSet()
 
     return render(request, 'main/profile_bb_add.html', {'form': form, 'formset': formset})
@@ -513,3 +548,18 @@ def profile_bb_delete(request, pk):
     else:
         context = {'bb': bb}
         return render(request, 'main/profile_bb_delete.html', context)
+    
+@require_POST
+@login_required
+def profile_bb_toggle_active(request, pk):
+    bb = get_object_or_404(Bb, pk=pk, author=request.user)
+
+    bb.is_active = not bb.is_active
+    bb.save(update_fields=['is_active'])
+
+    if bb.is_active:
+        messages.success(request, '✅ Объявление теперь показывается в общем списке')
+    else:
+        messages.info(request, 'ℹ️ Объявление скрыто из общего списка')
+
+    return redirect('main:profile_my_bbs')

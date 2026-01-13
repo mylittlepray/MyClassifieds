@@ -74,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'main.middleware.ImageUploadErrorMiddleware'
 ]
 
 
@@ -287,3 +288,37 @@ COOKIE_SALT = "anon-author-v1"
 # ==============================================================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================================================================
+# FILE UPLOAD SETTINGS
+# ==============================================================================
+
+# Максимальный размер загружаемого файла (в байтах)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
+
+# Время на обработку загрузки
+FILE_UPLOAD_TIMEOUT = 120  # 2 минуты
+
+# Временная директория для загрузок (на случай если media занята)
+FILE_UPLOAD_TEMP_DIR = BASE_DIR / 'tmp_uploads'
+
+# Разрешенные MIME-типы для изображений
+ALLOWED_IMAGE_MIMETYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/bmp',
+    'image/heic',
+    'image/heif',
+]
+
+# ==============================================================================
+# IMAGE PROCESSING
+# ==============================================================================
+
+# Максимальные размеры изображения
+IMAGE_MAX_SIZE_MB = 5
+IMAGE_MAX_DIMENSION = 2048  # Максимум по длинной стороне
+IMAGE_QUALITY = 75  # Качество при сжатии JPEG
