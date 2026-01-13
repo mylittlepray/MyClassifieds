@@ -14,8 +14,8 @@ register_heif_opener()
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_IMAGE_FORMATS = {'JPEG', 'PNG', 'WEBP', 'GIF', 'BMP', 'HEIC', 'HEIF'}
-ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.heic', '.heif'}
+ALLOWED_IMAGE_FORMATS = {'JPEG', 'PNG', 'WEBP', 'GIF', 'BMP', 'HEIC', 'HEIF', 'MPO'}
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.heic', '.heif', '.mpo'}
 MAX_IMAGE_SIZE = settings.IMAGE_MAX_SIZE_MB * 1024 * 1024 
 IMAGE_QUALITY = settings.IMAGE_QUALITY
 TARGET_MAX_DIMENSION = 2048
@@ -50,6 +50,8 @@ def validate_image_format(file: UploadedFile) -> None:
     try:
         file.seek(0)
         img = Image.open(file)
+        if getattr(img, "format", None) == "MPO":
+            img.seek(0)
         img.verify()
         
         if img.format not in ALLOWED_IMAGE_FORMATS:
@@ -82,6 +84,8 @@ def process_image(file: UploadedFile) -> InMemoryUploadedFile:
         
         file.seek(0)
         img = Image.open(file)
+        if getattr(img, "format", None) == "MPO":
+            img.seek(0)
         
         if img.format in ('HEIC', 'HEIF') or img.mode in ('RGBA', 'LA', 'P'):
             rgb_img = Image.new('RGB', img.size, (255, 255, 255))
@@ -158,6 +162,8 @@ def get_image_dimensions(file: UploadedFile) -> Tuple[int, int]:
     try:
         file.seek(0)
         img = Image.open(file)
+        if getattr(img, "format", None) == "MPO":
+            img.seek(0)
         return img.size
     finally:
         file.seek(0)

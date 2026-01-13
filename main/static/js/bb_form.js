@@ -92,9 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
       'image/png',
       'image/webp',
       'image/heic',
-      'image/heif'
+      'image/heif',
+      'image/mpo'
     ]);
-    const allowedExts = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+    const allowedExts = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.mpo']);
 
     const extOk = allowedExts.has(getExt(file.name));
     const mimeOk = file.type ? allowedMimes.has(file.type) : true;
