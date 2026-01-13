@@ -62,27 +62,19 @@
     <!-- Главное изображение -->
     <div class="mb-3">
       {{ form.image.label_tag }}
-
-      {# Не хардкодим input вручную: используем Django field, но добавляем attrs #}
-      {{ form.image.as_widget(attrs={
-        "class": "form-control",
-        "accept": "image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif",
-        "data-max-size": "5242880",
-        "data-preview-target": "mainImagePreview"
-      }) }}
+      {{ form.image }}
 
       <small class="text-muted d-block mt-2">
         Поддерживаемые форматы: JPG, PNG, WebP, HEIC/HEIF (до 5MB).<br>
         Изображение будет автоматически сжато и оптимизировано.
       </small>
 
-      <div id="mainImagePreview" class="mt-2 d-flex gap-2 flex-wrap"></div>
+      <div id="preview-{{ form.image.id_for_label }}" class="mt-2 d-flex gap-2 flex-wrap"></div>
 
       {% if form.image.errors %}
         <div class="invalid-feedback d-block text-danger mt-2">{{ form.image.errors.0 }}</div>
       {% endif %}
     </div>
-
   </div>
 
   <!-- Дополнительные изображения -->
@@ -101,16 +93,8 @@
       <div id="additional-images-container" class="d-grid gap-3">
         {% for ai_form in formset %}
           <div class="additional-image-form">
-            {% with preview_id="preview-"|add:ai_form.prefix %}
-              {{ ai_form.image.as_widget(attrs={
-                "class": "form-control",
-                "accept": "image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif",
-                "data-max-size": "5242880",
-                "data-preview-target": preview_id
-              }) }}
-
-              <div id="{{ preview_id }}" class="mt-2 d-flex gap-2 flex-wrap"></div>
-            {% endwith %}
+            {{ ai_form.image }}
+            <div id="preview-{{ ai_form.image.id_for_label }}" class="mt-2 d-flex gap-2 flex-wrap"></div>
 
             {% if ai_form.non_field_errors %}
               <small class="text-danger d-block mt-1">
