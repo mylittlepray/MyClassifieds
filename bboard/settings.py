@@ -30,7 +30,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['myclassifieds.ru', 'www.myclassifieds.ru', '193.176.78.111', 'localhost', '127.0.0.1']
+env_hosts = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
+ALLOWED_HOSTS = env_hosts + ["localhost", "127.0.0.1"]
 
 ROOT_URLCONF = 'bboard.urls'
 
@@ -256,15 +257,13 @@ LOGGING = {
 # ==============================================================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "connect.smtp.bz"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
+EMAIL_HOST = os.getenv("MAILERSEND_HOST")
 EMAIL_HOST_USER = os.getenv("MAILERSEND_USER")
 EMAIL_HOST_PASSWORD = os.getenv("MAILERSEND_KEY")
-
-DEFAULT_FROM_EMAIL = "noreply@myclassifieds.ru"
-
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 # ==============================================================================
 # CORS (Cross-Origin Resource Sharing)
