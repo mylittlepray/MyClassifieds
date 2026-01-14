@@ -1,4 +1,3 @@
-```markdown
 # MyClassifieds
 
 Django-проект доски объявлений (backend).
@@ -373,4 +372,3 @@ python manage.py runserver 0.0.0.0:8000
 - Всегда `DEBUG=False` и уникальный `DJANGO_SECRET_KEY`.
 - Добавь HTTPS (certbot/Let’s Encrypt) и `CSRF_TRUSTED_ORIGINS`.
 - Не коммить `.env` и секреты.
-```
